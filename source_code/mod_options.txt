@@ -1,0 +1,6 @@
+HIPNOTIC=OFF # Quake: Scourge of Armagon
+
+GAMEDIR=ID1 # Gamedir path
+SERVER_INSTALL_DIR=cl_dlls # Where put server dll
+CLIENT_INSTALL_DIR=cl_dlls # Where put client dll 
+SERVER_LIBRARY_NAME=progs # Library name for PC platforms

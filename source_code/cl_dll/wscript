@@ -1,0 +1,57 @@
+#! /usr/bin/env python
+# encoding: utf-8
+# a1batross, mittorn, 2018
+
+from waflib import Utils
+import os
+
+def options(opt):
+	grp = opt.add_option_group('Client options')
+
+	grp.add_option('--disable-goldsrc-support', action = 'store_false', dest = 'GOLDSOURCE_SUPPORT',
+		default=True, help = 'disable GoldSource compatibility')
+
+def configure(conf):
+	conf.env.GOLDSOURCE_SUPPORT = conf.options.GOLDSOURCE_SUPPORT
+
+def build(bld):
+	libs = []
+	defines = ['CLIENT_DLL']
+	includes = ['.',
+		'../dlls',
+		'../common',
+		'../engine',
+		'../pm_shared',
+		'../public']
+	source = bld.path.ant_glob('**/*.cpp')
+	source += bld.path.parent.ant_glob('pm_shared/*.c')
+
+	if bld.env.DEST_OS == 'win32':
+		libs += ['USER32']
+
+	if bld.env.GOLDSOURCE_SUPPORT:
+		defines += ['GOLDSOURCE_SUPPORT']
+
+		if bld.env.DEST_OS == 'win32':
+			libs += ["WINMM"]
+		else:
+			libs += ['DL']
+
+	if bld.env.DEST_OS not in ['android', 'dos']:
+		install_path = os.path.join(bld.env.GAMEDIR, bld.env.CLIENT_INSTALL_DIR)
+	else:
+		install_path = bld.env.PREFIX
+
+	bld.shlib(
+		source   = source,
+		target   = 'client' + bld.env.POSTFIX,
+		name     = 'client',
+		features = 'c cxx',
+		includes = includes,
+		defines  = defines,
+		use      = libs,
+		install_path = install_path,
+		subsystem = bld.env.MSVC_SUBSYSTEM,
+		idx = bld.get_taskgen_count()
+	)
+

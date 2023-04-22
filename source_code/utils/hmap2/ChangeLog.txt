@@ -1,0 +1,818 @@
+------------------------------------------------------------------------
+r9834 | havoc | 2010-01-13 04:12:39 -0800 (Wed, 13 Jan 2010) | 4 lines
+Changed paths:
+   M /trunk/hmap2/brush.c
+
+fix bugs with compilation of entities with an origin key (such as a
+rotate_object targeting an info_rotate, or simply a func_wall with an
+origin key set manually)
+
+------------------------------------------------------------------------
+r9833 | havoc | 2010-01-13 04:09:21 -0800 (Wed, 13 Jan 2010) | 3 lines
+Changed paths:
+   M /trunk/hmap2/outside.c
+
+don't consider an entity with brushes to be a leak, even if its origin
+is not 0 0 0
+
+------------------------------------------------------------------------
+r8880 | havoc | 2009-04-06 18:17:50 -0700 (Mon, 06 Apr 2009) | 2 lines
+Changed paths:
+   M /trunk/hmap2/light.c
+   M /trunk/hmap2/light_face.c
+
+fixed strange math in light falloff modes 1-x/r and 1-(x/r)*(x/r)
+
+------------------------------------------------------------------------
+r8877 | sajt | 2009-04-06 07:14:40 -0700 (Mon, 06 Apr 2009) | 1 line
+Changed paths:
+   M /trunk/hmap2/bsp2prt.c
+   M /trunk/hmap2/bspinfo.c
+   M /trunk/hmap2/cmdlib.c
+   M /trunk/hmap2/light.c
+   M /trunk/hmap2/qbsp.c
+   M /trunk/hmap2/vis.c
+
+remove annoying getchar
+------------------------------------------------------------------------
+r8876 | sajt | 2009-04-06 06:56:36 -0700 (Mon, 06 Apr 2009) | 1 line
+Changed paths:
+   M /trunk/hmap2/light.c
+   M /trunk/hmap2/qbsp.c
+   M /trunk/hmap2/vis.c
+
+don't advertise -mc, it should be removed
+------------------------------------------------------------------------
+r8450 | havoc | 2008-08-13 02:57:53 -0700 (Wed, 13 Aug 2008) | 2 lines
+Changed paths:
+   M /trunk/hmap2/threads.c
+
+fix some compile errors
+
+------------------------------------------------------------------------
+r8449 | havoc | 2008-08-13 02:47:30 -0700 (Wed, 13 Aug 2008) | 2 lines
+Changed paths:
+   M /trunk/hmap2/light.c
+
+doubled LIGHTCHAINS limit (because Lardarse needed it raised)
+
+------------------------------------------------------------------------
+r8360 | havoc | 2008-06-16 20:19:10 -0700 (Mon, 16 Jun 2008) | 2 lines
+Changed paths:
+   M /trunk/hmap2/threads.c
+
+changed a couple lines to be more correct
+
+------------------------------------------------------------------------
+r8359 | havoc | 2008-06-16 20:13:56 -0700 (Mon, 16 Jun 2008) | 2 lines
+Changed paths:
+   M /trunk/hmap2/Makefile
+   M /trunk/hmap2/hmap2.dsp
+   M /trunk/hmap2/qbsp.c
+   A /trunk/hmap2/threads.c
+   A /trunk/hmap2/threads.h
+   M /trunk/hmap2/vis.c
+
+added threading code from q3map2, but not making use of it yet
+
+------------------------------------------------------------------------
+r8358 | havoc | 2008-06-16 19:03:26 -0700 (Mon, 16 Jun 2008) | 3 lines
+Changed paths:
+   M /trunk/hmap2/light.c
+
+improve light time estimate by making 256 passes (each hitting different
+surfaces), same as the vis estimate improvement
+
+------------------------------------------------------------------------
+r8357 | havoc | 2008-06-16 19:02:45 -0700 (Mon, 16 Jun 2008) | 2 lines
+Changed paths:
+   M /trunk/hmap2/vis.c
+
+use more passes for a better estimate of time remaining
+
+------------------------------------------------------------------------
+r8356 | havoc | 2008-06-16 18:52:08 -0700 (Mon, 16 Jun 2008) | 4 lines
+Changed paths:
+   M /trunk/hmap2/vis.c
+
+changed GetNextPortal to scan portals out of order to make time
+estimates much much more consistent than before (I.E. quite accurate
+rather than continually increasing)
+
+------------------------------------------------------------------------
+r8266 | havoc | 2008-04-23 01:36:49 -0700 (Wed, 23 Apr 2008) | 4 lines
+Changed paths:
+   M /trunk/hmap2/qbsp.c
+   M /trunk/hmap2/wad.c
+
+added -notex option to store blank textures into bsp files rather than
+the real ones, which makes the files zip better (but requires external
+texture replacements to see anything)
+
+------------------------------------------------------------------------
+r8062 | havoc | 2008-02-01 01:56:25 -0800 (Fri, 01 Feb 2008) | 3 lines
+Changed paths:
+   M /trunk/hmap2/solidbsp.c
+
+fix two uses of 8192 that should have been BOGUS_RANGE, this should
+improve BSP construction quality on really huge maps
+
+------------------------------------------------------------------------
+r7622 | sajt | 2007-10-09 14:58:40 -0700 (Tue, 09 Oct 2007) | 1 line
+Changed paths:
+   M /trunk/hmap2/bspfile.c
+
+fix bspsize calculation, not that it matters with the safety padding
+------------------------------------------------------------------------
+r6528 | havoc | 2006-07-25 20:47:20 -0700 (Tue, 25 Jul 2006) | 2 lines
+Changed paths:
+   M /trunk/hmap2/map.c
+   M /trunk/hmap2/vis.c
+
+hush some warnings
+
+------------------------------------------------------------------------
+r6527 | havoc | 2006-07-25 20:46:50 -0700 (Tue, 25 Jul 2006) | 2 lines
+Changed paths:
+   M /trunk/hmap2/cmdlib.h
+
+increased MAXTOKEN from 1024 to 16384 (was originally 128 in qbsp)
+
+------------------------------------------------------------------------
+r6198 | havoc | 2006-03-28 02:15:52 -0800 (Tue, 28 Mar 2006) | 4 lines
+Changed paths:
+   M /trunk/hmap2/bspfile.c
+   M /trunk/hmap2/bspfile.h
+   M /trunk/hmap2/cmdlib.h
+   M /trunk/hmap2/light.c
+   M /trunk/hmap2/light_face.c
+   M /trunk/hmap2/qbsp.c
+
+fixed bug with type 1 and type 2 lights which was limiting them to their radius (which is irrelevant to them)
+added reporting of light type default/override behavior when the commandline options are used
+added tangentspace deluxemap file output (.dlit)
+
+------------------------------------------------------------------------
+r6197 | havoc | 2006-03-28 02:13:26 -0800 (Tue, 28 Mar 2006) | 2 lines
+Changed paths:
+   M /trunk/hmap2/vis_flow.c
+
+fix two warnings
+
+------------------------------------------------------------------------
+r6070 | havoc | 2006-03-04 08:12:37 -0800 (Sat, 04 Mar 2006) | 2 lines
+Changed paths:
+   M /trunk/hmap2/map.c
+
+redesigned tx.vecs calculation, now supports q3/doom3 brushprimitives
+
+------------------------------------------------------------------------
+r6069 | havoc | 2006-03-04 08:11:10 -0800 (Sat, 04 Mar 2006) | 2 lines
+Changed paths:
+   M /trunk/hmap2/bspfile.h
+
+expanded limits further
+
+------------------------------------------------------------------------
+r5942 | havoc | 2006-02-04 15:18:20 -0800 (Sat, 04 Feb 2006) | 2 lines
+Changed paths:
+   M /trunk/hmap2/map.c
+   M /trunk/hmap2/mathlib.h
+
+redesigned texture projection code, fixed q3 .map interpretation to use axial projection (after a discussion with SmallPileofGibs about this), added (hopefully working) brushprimitive handling, so all texturing forms should work now, and heavily refactored the rotation baseaxis code, now does rotation and scaling directly as part of the baseaxis stuff which has been inlined in the brushface code
+
+------------------------------------------------------------------------
+r5715 | sajt | 2005-09-10 16:15:04 -0700 (Sat, 10 Sep 2005) | 2 lines
+Changed paths:
+   M /trunk/hmap2/bspfile.c
+   M /trunk/hmap2/bspfile.h
+   M /trunk/hmap2/qbsp.c
+
+Probably a better way to do this
+
+------------------------------------------------------------------------
+r5712 | sajt | 2005-09-10 14:24:16 -0700 (Sat, 10 Sep 2005) | 2 lines
+Changed paths:
+   M /trunk/hmap2/bspfile.c
+
+Just trying to make 'ends' meet
+
+------------------------------------------------------------------------
+r5708 | sajt | 2005-09-10 03:25:32 -0700 (Sat, 10 Sep 2005) | 2 lines
+Changed paths:
+   M /trunk/hmap2/brush.c
+   M /trunk/hmap2/bspfile.c
+   M /trunk/hmap2/bspfile.h
+   M /trunk/hmap2/qbsp.c
+
+Owners of Sun whatchamacallits and Playstation 3 secondary processors can now breathe a sigh of relief! And changed hull info to use the hullinfo_t struct like DarkPlaces does
+
+------------------------------------------------------------------------
+r5705 | sajt | 2005-09-09 23:23:40 -0700 (Fri, 09 Sep 2005) | 2 lines
+Changed paths:
+   M /trunk/hmap2/bspfile.c
+   M /trunk/hmap2/bspfile.h
+   M /trunk/hmap2/qbsp.c
+
+A tiny bit of extra junk removed... There is a lot of extra junk
+
+------------------------------------------------------------------------
+r5704 | sajt | 2005-09-09 23:19:38 -0700 (Fri, 09 Sep 2005) | 4 lines
+Changed paths:
+   M /trunk/hmap2/brush.c
+   M /trunk/hmap2/bsp5.h
+   M /trunk/hmap2/bspfile.c
+   M /trunk/hmap2/bspfile.h
+   M /trunk/hmap2/qbsp.c
+   M /trunk/hmap2/tree.c
+
+Version 2 of MCBSP... the format supports up to 16 hulls instead of Quake's 4. Hulls are customizable by the mapper like so: put '_hull1_mins' '-16 -16 -24' and '_hull1_maxs' '16 16 32' key/value pairs in the worldspawn entity. You can use _hull1_* through _hull15_*. (_hull0 is always 0 0 0, 0 0 0 and cannot be changed)
+
+Once again, the format is not finalized. Do not use it, because backward compatibility will not be maintained.
+
+------------------------------------------------------------------------
+r5703 | sajt | 2005-09-09 18:13:08 -0700 (Fri, 09 Sep 2005) | 2 lines
+Changed paths:
+   M /trunk/hmap2/light_face.c
+
+Clean up after your dog!
+
+------------------------------------------------------------------------
+r5684 | sajt | 2005-09-06 04:17:35 -0700 (Tue, 06 Sep 2005) | 4 lines
+Changed paths:
+   M /trunk/darkplaces/bspfile.h
+   M /trunk/darkplaces/model_brush.c
+   M /trunk/darkplaces/model_shared.c
+   M /trunk/darkplaces/model_shared.h
+   M /trunk/hmap2/brush.c
+   M /trunk/hmap2/bsp5.h
+   M /trunk/hmap2/bspfile.c
+   M /trunk/hmap2/bspfile.h
+   M /trunk/hmap2/light.c
+   M /trunk/hmap2/map.c
+   M /trunk/hmap2/qbsp.c
+   M /trunk/hmap2/tree.c
+   M /trunk/hmap2/vis.c
+
+New MCBSP format, used for my mod. It differs from bsp 29 in that it stores coloured lighting data in the bsp file itself, it has a different set of hulls, and a differently formatted header (I used a few hacks to pull that off without adding a new header struct... maybe be changed later).
+
+Anyway, do NOT use this format yet! The format is WIP and backward compatibility will not be kept!
+
+------------------------------------------------------------------------
+r5661 | sajt | 2005-08-25 20:27:50 -0700 (Thu, 25 Aug 2005) | 2 lines
+Changed paths:
+   M /trunk/hmap2/vis.c
+
+A rather unsightly way to stop the program from saying secondssss
+
+------------------------------------------------------------------------
+r5659 | sajt | 2005-08-24 22:31:05 -0700 (Wed, 24 Aug 2005) | 2 lines
+Changed paths:
+   M /trunk/hmap2/bsp5.h
+
+Duplicate prototype... don't mind me...
+
+------------------------------------------------------------------------
+r5459 | havoc | 2005-06-21 11:21:52 -0700 (Tue, 21 Jun 2005) | 3 lines
+Changed paths:
+   M /trunk/hmap2/brush.c
+   M /trunk/hmap2/bsp2prt.c
+   M /trunk/hmap2/bsp5.h
+   M /trunk/hmap2/bspfile.c
+   M /trunk/hmap2/bspinfo.c
+   M /trunk/hmap2/cmdlib.c
+   M /trunk/hmap2/cmdlib.h
+   M /trunk/hmap2/light.c
+   M /trunk/hmap2/light.h
+   M /trunk/hmap2/mem.c
+   M /trunk/hmap2/outside.c
+   M /trunk/hmap2/portals.c
+   M /trunk/hmap2/qbsp.c
+   M /trunk/hmap2/vis.c
+   M /trunk/hmap2/wad.c
+   M /trunk/hmap2/writebsp.c
+
+rewrote filename handling to properly handle being given a "blah.map" filename when doing vis/light/etc which actually need a .bsp filename
+consolidated all the filename generation to one place in qbsp.c so that this is much easier to maintain
+
+------------------------------------------------------------------------
+r5167 | havoc | 2005-04-07 05:28:40 -0700 (Thu, 07 Apr 2005) | 2 lines
+Changed paths:
+   M /trunk/hmap2/winding.c
+
+corrected edgenormal fix
+
+------------------------------------------------------------------------
+r5166 | havoc | 2005-04-07 05:26:13 -0700 (Thu, 07 Apr 2005) | 2 lines
+Changed paths:
+   M /trunk/hmap2/winding.c
+
+redesigned CheckWinding to try to fix all possible errors (except BOGUS_RANGE)
+
+------------------------------------------------------------------------
+r5150 | havoc | 2005-04-04 04:45:28 -0700 (Mon, 04 Apr 2005) | 2 lines
+Changed paths:
+   M /trunk/hmap2/brush.c
+
+fixed AddHullEdge (there was a bit more to it than Tyrann mentioned)
+
+------------------------------------------------------------------------
+r5148 | havoc | 2005-04-04 00:09:03 -0700 (Mon, 04 Apr 2005) | 2 lines
+Changed paths:
+   M /trunk/hmap2/brush.c
+   M /trunk/hmap2/bsp5.h
+   M /trunk/hmap2/faces.c
+   M /trunk/hmap2/light.h
+   M /trunk/hmap2/map.c
+   M /trunk/hmap2/map.h
+   M /trunk/hmap2/mathlib.h
+   M /trunk/hmap2/qbsp.c
+   M /trunk/hmap2/tjunc.c
+   M /trunk/hmap2/vis.h
+   M /trunk/hmap2/winding.c
+
+thanks to Tyrann for better epsilon definitions (which I put in mathlib.h, his were in qbsp.h), and a fix in AddHullEdge, these changes should cure a lot of compilation bugs with complex geometry
+
+------------------------------------------------------------------------
+r5147 | havoc | 2005-04-03 23:38:47 -0700 (Sun, 03 Apr 2005) | 2 lines
+Changed paths:
+   M /trunk/hmap2/vis.c
+   M /trunk/hmap2/vis_flow.c
+
+(hopefully) fix the decompress vis warnings
+
+------------------------------------------------------------------------
+r4885 | havoc | 2004-12-22 13:13:32 -0800 (Wed, 22 Dec 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/light_face.c
+
+forgot a newline on the "texture axis perpendicular to face" warning
+
+------------------------------------------------------------------------
+r4884 | havoc | 2004-12-22 12:59:36 -0800 (Wed, 22 Dec 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/light_face.c
+
+made "texture axis perpendicular to face" error into a warning
+
+------------------------------------------------------------------------
+r4883 | havoc | 2004-12-22 12:56:34 -0800 (Wed, 22 Dec 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/light_face.c
+
+now reports location of face in "texture axis perpendicular to face" error
+
+------------------------------------------------------------------------
+r4770 | havoc | 2004-11-18 04:46:19 -0800 (Thu, 18 Nov 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/hmap2readme.txt
+   M /trunk/hmap2/light.c
+   M /trunk/hmap2/light.h
+   M /trunk/hmap2/light_face.c
+
+added -harshshade to -light utility
+
+------------------------------------------------------------------------
+r4562 | havoc | 2004-09-28 00:06:22 -0700 (Tue, 28 Sep 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/brush.c
+
+fix origin key handling in brush loader
+
+------------------------------------------------------------------------
+r4497 | tomaz | 2004-09-14 08:27:53 -0700 (Tue, 14 Sep 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/brush.c
+
+Vic sent in a patch that checks for incomplete brushes, removes them and prints warnings instead of exiting with error in CheckWinding.
+
+------------------------------------------------------------------------
+r4494 | havoc | 2004-09-13 17:40:40 -0700 (Mon, 13 Sep 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/winding.c
+
+patch from Vic to make CheckWinding error out on incomplete brushes
+
+------------------------------------------------------------------------
+r4246 | havoc | 2004-05-26 14:14:17 -0700 (Wed, 26 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/hmap2readme.txt
+   M /trunk/hmap2/vis.c
+   M /trunk/hmap2/vis.h
+   M /trunk/hmap2/vis_flow.c
+
+Vic added -farplane option to vis which limits visible distance
+
+------------------------------------------------------------------------
+r4241 | havoc | 2004-05-22 12:58:57 -0700 (Sat, 22 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/tjunc.c
+
+Vic made superface be allocated and freed rather than hanging around for all eternity
+
+------------------------------------------------------------------------
+r4240 | havoc | 2004-05-22 12:56:51 -0700 (Sat, 22 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/vis_flow.c
+
+Vic sped up base vis a little
+
+------------------------------------------------------------------------
+r4239 | havoc | 2004-05-22 12:54:28 -0700 (Sat, 22 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/wad.c
+
+Vic fixed a bug with animating texture names
+
+------------------------------------------------------------------------
+r4225 | havoc | 2004-05-21 12:55:01 -0700 (Fri, 21 May 2004) | 6 lines
+Changed paths:
+   M /trunk/hmap2/brush.c
+   M /trunk/hmap2/bsp5.h
+   M /trunk/hmap2/light_face.c
+   M /trunk/hmap2/map.c
+   M /trunk/hmap2/map.h
+   M /trunk/hmap2/qbsp.c
+   M /trunk/hmap2/scriptlib.c
+   M /trunk/hmap2/wad.c
+
+loads q3 .map (does not yet support Brush Primitive texturing, but does load it, skips patches)
+commented out unused light point nudge stuff in CalcPoints
+rewrote GetToken (.map parser)
+wad handling now does no-path name matches for q2/q3-style texture names (since wads do not contain directories)
+now writes simple checkerboard textures to bsp for missing textures (this preserves their names)
+
+------------------------------------------------------------------------
+r4201 | havoc | 2004-05-19 12:34:13 -0700 (Wed, 19 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/winding.c
+
+optimized WindingArea to only do the * 0.5 once, and added a comment explaining how triangle area is calculated (Thanks to Vic for the optimization)
+
+------------------------------------------------------------------------
+r4156 | havoc | 2004-05-13 10:12:09 -0700 (Thu, 13 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/scriptlib.c
+
+removed #define MAXTOKEN
+
+------------------------------------------------------------------------
+r4155 | havoc | 2004-05-13 10:01:08 -0700 (Thu, 13 May 2004) | 3 lines
+Changed paths:
+   M /trunk/hmap2/light.c
+   M /trunk/hmap2/light.h
+   M /trunk/hmap2/light_face.c
+   M /trunk/hmap2/light_trace.c
+
+got rid of tnode stuff, now traces directly using the dnodes/dplanes/dleafs
+changed how points are validated, now traces from center of polygon to each point and moves the point there (this works now that the tracing was fixed up)
+
+------------------------------------------------------------------------
+r4154 | havoc | 2004-05-13 09:58:20 -0700 (Thu, 13 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/cmdlib.c
+   M /trunk/hmap2/portals.c
+
+patch from Vic with some cleanups to COM_Parse and various function declarations in portals.c
+
+------------------------------------------------------------------------
+r4153 | havoc | 2004-05-13 09:53:57 -0700 (Thu, 13 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/cmdlib.c
+   M /trunk/hmap2/cmdlib.h
+
+patch from Vic that fixes a potential crash in COM_Parse, and adds support for /* */ comments in .map files
+
+------------------------------------------------------------------------
+r4152 | havoc | 2004-05-13 09:52:32 -0700 (Thu, 13 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/mathlib.c
+
+Vic suggested clearing the unneeded components of axial plane normals, I chose to set the entire vector to exactly what it should be
+
+------------------------------------------------------------------------
+r4151 | havoc | 2004-05-13 09:51:22 -0700 (Thu, 13 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/portals.c
+
+Vic changed some variables to static and some functions to non-static
+
+------------------------------------------------------------------------
+r4150 | havoc | 2004-05-12 18:11:34 -0700 (Wed, 12 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/hmap2readme.txt
+
+clarified relighting explanation
+
+------------------------------------------------------------------------
+r4149 | havoc | 2004-05-12 17:55:15 -0700 (Wed, 12 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/Makefile
+   M /trunk/hmap2/bsp2prt.c
+   M /trunk/hmap2/bsp5.h
+   M /trunk/hmap2/bspfile.c
+   A /trunk/hmap2/bspinfo.c
+   M /trunk/hmap2/csg4.c
+   M /trunk/hmap2/faces.c
+   M /trunk/hmap2/hmap2.dsp
+   M /trunk/hmap2/hmap2readme.txt
+   M /trunk/hmap2/light.c
+   M /trunk/hmap2/light.h
+   M /trunk/hmap2/light_face.c
+   M /trunk/hmap2/light_trace.c
+   M /trunk/hmap2/mathlib.h
+   M /trunk/hmap2/portals.c
+   M /trunk/hmap2/qbsp.c
+   A /trunk/hmap2/relight_all.bat
+   A /trunk/hmap2/revis_all.bat
+   M /trunk/hmap2/tjunc.c
+   M /trunk/hmap2/vis.c
+
+Vic's latest changes
+
+------------------------------------------------------------------------
+r4143 | havoc | 2004-05-04 05:26:00 -0700 (Tue, 04 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/vis.c
+
+removed unused variable c_cnt
+
+------------------------------------------------------------------------
+r4142 | havoc | 2004-05-04 05:25:19 -0700 (Tue, 04 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/light_face.c
+
+patch from Vic - dynamically allocates samples and points arrays only large enough for the faces being encountered
+
+------------------------------------------------------------------------
+r4140 | havoc | 2004-05-04 02:51:21 -0700 (Tue, 04 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/light.c
+
+remove l->spotcone check as it was breaking spotlights
+
+------------------------------------------------------------------------
+r4139 | havoc | 2004-05-04 02:29:32 -0700 (Tue, 04 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/brush.c
+
+free faces before calling CreateBrushFaces again in hull brush enlargement
+
+------------------------------------------------------------------------
+r4137 | havoc | 2004-05-04 01:38:42 -0700 (Tue, 04 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/hmap2readme.txt
+
+revisions from Vic
+
+------------------------------------------------------------------------
+r4136 | havoc | 2004-05-04 01:31:05 -0700 (Tue, 04 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/light.c
+
+fixed sunlight bug (spotdir was being cleared if spotcone was <= 0)
+
+------------------------------------------------------------------------
+r4135 | havoc | 2004-05-03 09:13:10 -0700 (Mon, 03 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/fast.bat
+   M /trunk/hmap2/full.bat
+   M /trunk/hmap2/relight.bat
+   M /trunk/hmap2/revis.bat
+
+updated bat files
+
+------------------------------------------------------------------------
+r4133 | havoc | 2004-05-03 03:37:55 -0700 (Mon, 03 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2
+   M /trunk/hmap2/.cvsignore
+   M /trunk/hmap2/Makefile
+   M /trunk/hmap2/light.c
+
+now uses -MD (.d dependency files), and sun lights are not vis culled
+
+------------------------------------------------------------------------
+r4128 | havoc | 2004-05-02 06:06:04 -0700 (Sun, 02 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/winding.c
+   M /trunk/hmap2/winding.h
+
+added PrintWinding function for debugging purposes
+
+------------------------------------------------------------------------
+r4127 | havoc | 2004-05-02 06:03:32 -0700 (Sun, 02 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/brush.c
+
+remove a bit of debugging code I didn't mean to leave in there
+
+------------------------------------------------------------------------
+r4126 | havoc | 2004-05-02 05:59:41 -0700 (Sun, 02 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/brush.c
+
+fix ClipWindingEpsilon call, the last two parameters were swapped, causing Evil Things to happen
+
+------------------------------------------------------------------------
+r4125 | havoc | 2004-05-02 03:26:05 -0700 (Sun, 02 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/hmap2readme.txt
+
+remove a stray -
+
+------------------------------------------------------------------------
+r4124 | havoc | 2004-05-02 02:58:27 -0700 (Sun, 02 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/hmap2readme.txt
+   M /trunk/hmap2/vis.c
+
+added docs on -noreuse, and added (Vic) to features added by Vic
+
+------------------------------------------------------------------------
+r4123 | havoc | 2004-05-02 01:51:40 -0700 (Sun, 02 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/light.c
+
+fix two nasty reused variable bugs
+
+------------------------------------------------------------------------
+r4122 | havoc | 2004-05-02 01:07:10 -0700 (Sun, 02 May 2004) | 12 lines
+Changed paths:
+   M /trunk/hmap2/bsp2prt.c
+   A /trunk/hmap2/hmap2readme.txt
+   D /trunk/hmap2/hmapreadme.txt
+   M /trunk/hmap2/light.c
+   M /trunk/hmap2/light.h
+   M /trunk/hmap2/light_face.c
+   M /trunk/hmap2/light_trace.c
+   M /trunk/hmap2/qbsp.c
+   M /trunk/hmap2/vis.c
+
+now tyrlite compatible (light types ("delay") 0, 1, 2, and 3 supported), and a couple other new light types (4 is sun, and 5 is 1-(x/dist*x/dist) which matches rtlights)
+no longer writes .lights files (due to limitations in the format)
+cleaned up light entity loader
+rewrote much of SingleLightFace
+added -minlight, -ambientlight, -radiusscale, -defaulttype, and -overridetypes options
+expanded the help to cover the new options, and use shorter descriptions (enforced 80 char limit per line to make sure it never wraps for most people)
+removed distbias and falloff tweaks (now type 1 and type 2 lights are very simple, although they now have a prominent highlight)
+moved mapnum search out of SingleLightFace and into its own function, it is now called only when it is determined that there is light on the surface (this should better handle allocation issues where 4 light styles are on a surface)
+LightTrace now returns startcontents and endcontents in the struct (necessary for sun lighting)
+new readme (hmap2readme.txt)
+various other bugfixes and things
+
+------------------------------------------------------------------------
+r4121 | havoc | 2004-05-01 23:03:04 -0700 (Sat, 01 May 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/qbsp.c
+
+removed an already removed option from help
+
+------------------------------------------------------------------------
+r4119 | havoc | 2004-04-30 14:55:46 -0700 (Fri, 30 Apr 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/brush.c
+
+Vic's patch: use ClearBounds instead of manually setting mins/maxs, and moved the AddPointToBounds out to its proper loop
+
+------------------------------------------------------------------------
+r4032 | coderjoe | 2004-03-15 22:55:24 -0800 (Mon, 15 Mar 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/fast.bat
+   M /trunk/hmap2/full.bat
+   M /trunk/hmap2/relight.bat
+   M /trunk/hmap2/revis.bat
+
+ok. make *.bat binary and re-dos-newline them
+
+------------------------------------------------------------------------
+r4031 | coderjoe | 2004-03-15 22:53:23 -0800 (Mon, 15 Mar 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2
+   M /trunk/hmap2/.cvsignore
+   M /trunk/hmap2/fast.bat
+   M /trunk/hmap2/full.bat
+   M /trunk/hmap2/hmapreadme.txt
+   M /trunk/hmap2/revis.bat
+   M /trunk/lhfire/scriptinginfo.txt
+   M /trunk/twilight/doc/COPYING-BSD.txt
+   M /trunk/twilight/doc/COPYING-strl.txt
+   M /trunk/twilight/doc/COPYING.txt
+   M /trunk/twilight/doc/Credits.txt
+   M /trunk/twilight/doc/TODO.txt
+   M /trunk/twilight/doc/cvar.txt
+
+fix newlines.
+
+------------------------------------------------------------------------
+r3908 | havoc | 2004-02-18 19:06:37 -0800 (Wed, 18 Feb 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/Makefile
+
+changed executable name from hmap to hmap2
+
+------------------------------------------------------------------------
+r3901 | havoc | 2004-02-17 04:12:49 -0800 (Tue, 17 Feb 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/hmapreadme.txt
+
+corrected website url and email address
+
+------------------------------------------------------------------------
+r3900 | havoc | 2004-02-16 18:26:03 -0800 (Mon, 16 Feb 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2/Makefile
+   M /trunk/hmap2/brush.c
+   M /trunk/hmap2/bsp2prt.c
+   M /trunk/hmap2/bsp5.h
+   M /trunk/hmap2/bspfile.c
+   M /trunk/hmap2/bspfile.h
+   M /trunk/hmap2/cmdlib.c
+   M /trunk/hmap2/cmdlib.h
+   M /trunk/hmap2/csg4.c
+   M /trunk/hmap2/faces.c
+   M /trunk/hmap2/light.c
+   M /trunk/hmap2/light.h
+   M /trunk/hmap2/light_face.c
+   M /trunk/hmap2/light_trace.c
+   M /trunk/hmap2/map.c
+   M /trunk/hmap2/map.h
+   M /trunk/hmap2/mathlib.c
+   M /trunk/hmap2/mathlib.h
+   M /trunk/hmap2/mem.c
+   M /trunk/hmap2/mem.h
+   M /trunk/hmap2/outside.c
+   M /trunk/hmap2/portals.c
+   M /trunk/hmap2/qbsp.c
+   M /trunk/hmap2/scriptlib.c
+   M /trunk/hmap2/solidbsp.c
+   M /trunk/hmap2/tjunc.c
+   M /trunk/hmap2/tree.c
+   M /trunk/hmap2/vis.c
+   M /trunk/hmap2/vis.h
+   M /trunk/hmap2/vis_flow.c
+   M /trunk/hmap2/vis_sound.c
+   M /trunk/hmap2/wad.c
+   M /trunk/hmap2/winding.c
+   M /trunk/hmap2/winding.h
+   M /trunk/hmap2/writebsp.c
+
+fix line endings to be unix
+
+------------------------------------------------------------------------
+r3899 | havoc | 2004-02-16 18:25:08 -0800 (Mon, 16 Feb 2004) | 2 lines
+Changed paths:
+   M /trunk/hmap2
+   A /trunk/hmap2/.cvsignore
+
+added .cvsignore
+
+------------------------------------------------------------------------
+r3897 | havoc | 2004-02-15 18:50:37 -0800 (Sun, 15 Feb 2004) | 2 lines
+Changed paths:
+   A /trunk/hmap2
+   A /trunk/hmap2/Makefile
+   A /trunk/hmap2/brush.c
+   A /trunk/hmap2/bsp2prt.c
+   A /trunk/hmap2/bsp5.h
+   A /trunk/hmap2/bspfile.c
+   A /trunk/hmap2/bspfile.h
+   A /trunk/hmap2/cmdlib.c
+   A /trunk/hmap2/cmdlib.h
+   A /trunk/hmap2/csg4.c
+   A /trunk/hmap2/faces.c
+   A /trunk/hmap2/fast.bat
+   A /trunk/hmap2/full.bat
+   A /trunk/hmap2/hmap2.dsp
+   A /trunk/hmap2/hmapreadme.txt
+   A /trunk/hmap2/light.c
+   A /trunk/hmap2/light.h
+   A /trunk/hmap2/light_face.c
+   A /trunk/hmap2/light_trace.c
+   A /trunk/hmap2/map.c
+   A /trunk/hmap2/map.h
+   A /trunk/hmap2/mathlib.c
+   A /trunk/hmap2/mathlib.h
+   A /trunk/hmap2/mem.c
+   A /trunk/hmap2/mem.h
+   A /trunk/hmap2/outside.c
+   A /trunk/hmap2/portals.c
+   A /trunk/hmap2/qbsp.c
+   A /trunk/hmap2/relight.bat
+   A /trunk/hmap2/revis.bat
+   A /trunk/hmap2/scriptlib.c
+   A /trunk/hmap2/solidbsp.c
+   A /trunk/hmap2/tjunc.c
+   A /trunk/hmap2/tree.c
+   A /trunk/hmap2/vis.c
+   A /trunk/hmap2/vis.h
+   A /trunk/hmap2/vis_flow.c
+   A /trunk/hmap2/vis_sound.c
+   A /trunk/hmap2/wad.c
+   A /trunk/hmap2/winding.c
+   A /trunk/hmap2/winding.h
+   A /trunk/hmap2/writebsp.c
+
+Vic's greatly improved hmap, now called hmap2 (this is hqbsp/hvis/hlight/bsp2prt with tons of bugfixes and improvements, combined into one program)
+
+------------------------------------------------------------------------

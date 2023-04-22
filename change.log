@@ -1,0 +1,15 @@
+v 1.03
+- some bugfixes
+- update code to new version of Xash3D engine
+
+v 1.02
+- update code to new version of Xash3D engine
+
+v 1.01
+- fixed trap_shooter invalid delay between shoots
+- porting game to the latest version of Xash3D engine
+- record a new demos because network protocol was changed
+- now game demos playing as menu background
+
+v 1.00
+- initial release

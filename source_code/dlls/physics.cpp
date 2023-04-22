@@ -31,7 +31,7 @@
 #include "gamerules.h"
 #include "physcallback.h"
 #include "com_model.h"
-#include "features.h"
+#include "enginefeatures.h"
 
 extern DLL_GLOBAL BOOL		g_fXashEngine;
 

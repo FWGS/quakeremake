@@ -70,6 +70,16 @@ TYPEDESCRIPTION	CBasePlayer::m_playerSaveData[] =
 	DEFINE_FIELD( CBasePlayer, m_flSuperDamageSound, FIELD_TIME ),
 	DEFINE_FIELD( CBasePlayer, m_flRadSuitTime, FIELD_TIME ),
 	DEFINE_FIELD( CBasePlayer, m_flRadSuitFinished, FIELD_TIME ),
+#ifdef HIPNOTIC
+	DEFINE_FIELD( CBasePlayer, m_flWetSuitTime, FIELD_TIME ),
+	DEFINE_FIELD( CBasePlayer, m_flWetSuitFinished, FIELD_TIME ),
+	DEFINE_FIELD( CBasePlayer, m_flEmpathyShieldTime, FIELD_TIME ),
+	DEFINE_FIELD( CBasePlayer, m_flEmpathyShieldFinished, FIELD_TIME ),
+	DEFINE_FIELD( CBasePlayer, m_flEmpathyShieldSound, FIELD_TIME ),
+
+	DEFINE_FIELD( CBasePlayer, m_fEarthQuake, FIELD_BOOLEAN ),
+	DEFINE_FIELD( CBasePlayer, m_flEarthQuakeTime, FIELD_TIME ),
+#endif /* HIPNOTIC */
 
 	DEFINE_FIELD( CBasePlayer, m_flCheckHealthTime, FIELD_TIME ),
 
@@ -163,6 +173,16 @@ void CBasePlayer :: DeathBubbles( float flCount )
 	pBubbles->Spawn();
 }
 
+#ifdef HIPNOTIC
+int CBasePlayer :: TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType )
+{
+	if( g_fDischarged && m_flWetSuitFinished )
+		return 0;
+
+	return CQuakeMonster :: TakeDamage( pevInflictor, pevAttacker, flDamage, bitsDamageType );
+}
+
+#endif /* HIPNOTIC */
 void CBasePlayer :: PainSound( void )
 {
 	// water pain sounds
@@ -306,6 +326,10 @@ void CBasePlayer::Killed( entvars_t *pevAttacker, int iGib )
 	m_flInvisibleFinished = 0;
 	m_flSuperDamageFinished = 0;
 	m_flRadSuitFinished = 0;
+#ifdef HIPNOTIC
+	m_flWetSuitFinished = 0;
+	m_flEmpathyShieldFinished = 0;
+#endif /* HIPNOTIC */
 
 	pev->deadflag		= DEAD_DYING;
 	pev->movetype		= MOVETYPE_TOSS;
@@ -899,6 +923,22 @@ void CBasePlayer::PreThink(void)
 	ItemPreFrame( );
 	WaterMove();
 
+#ifdef HIPNOTIC
+	// Kill player on Edge of Oblivion
+	if(( pev->origin.z < -1300.0f ) && FStrEq( STRING( gpWorld->pev->model ), "maps/hipdm1.bsp" ) && ( pev->health > 0.0f ) )
+	{
+		m_iDeathType = MAKE_STRING ("falling");
+
+		if (m_flInvincibleFinished >= gpGlobals->time)
+		{
+			m_flInvincibleFinished = 0;
+			m_iItems &= ~IT_INVULNERABILITY;
+			m_flInvincibleTime = 0;
+		}
+		TakeDamage( pev, gpWorld->pev, pev->health + 1000.0f, DMG_FALL);
+	}
+
+#endif /* HIPNOTIC */
 	// mega_health received too many health for player! decrease it every second
 	if( pev->health > pev->max_health && (m_flCheckHealthTime <= gpGlobals->time))
 	{
@@ -906,6 +946,45 @@ void CBasePlayer::PreThink(void)
 		pev->health -= 1;
 	}
 
+#ifdef HIPNOTIC
+	if( m_flWetSuitFinished > gpGlobals->time )
+	{
+		if( pev->waterlevel == 2 )
+		{
+			pev->velocity *= 1.25f;
+		}
+		if( pev->waterlevel == 3 )
+		{
+			pev->velocity *= 1.5f;
+		}
+
+		if( pev->waterlevel >= 2 )
+		{
+			// play scuba sound
+			if( m_flSwimTime < gpGlobals->time )
+			{
+				m_flSwimTime = gpGlobals->time + 7.0f;
+				EMIT_SOUND (ENT(pev), CHAN_BODY, "misc/wetsuit.wav", 1, ATTN_NORM);
+			}
+			else
+			{
+				if (fabs(m_flSwimTime - gpGlobals->time - 6.0f) < 0.04f)
+				{
+					DeathBubbles(1);
+				}
+				else if (fabs(m_flSwimTime - gpGlobals->time - 5.5f) < 0.04f)
+				{
+					DeathBubbles(1);
+				}
+				else if (fabs(m_flSwimTime - gpGlobals->time - 5.0f ) < 0.04f)
+				{
+					DeathBubbles(1);
+				}
+			}
+		}
+	}
+
+#endif /* HIPNOTIC */
 	// JOHN: checks if new client data (for HUD and view control) needs to be sent to the client
 	UpdateClientData();
 
@@ -1116,6 +1195,73 @@ void CBasePlayer::CheckPowerups( void )
 			m_flRadSuitFinished = 0;
 		}
 	}	
+#ifdef HIPNOTIC
+
+	// wetsuit	
+	if (m_flWetSuitFinished)
+	{
+		pev->air_finished = gpGlobals->time + 12;		// don't drown
+
+		// sound and screen flash when items starts to run out
+		if (m_flWetSuitFinished < gpGlobals->time + 3)
+		{
+			if (m_flWetSuitTime == 1)
+			{
+				CLIENT_PRINTF( edict(), print_console, "Air supply in Wetsuit is running out\n");
+				EMIT_SOUND(ENT(pev), CHAN_AUTO, "items/suit2.wav", 1, ATTN_NORM);
+				m_flWetSuitTime = gpGlobals->time + 1;
+				BONUS_FLASH( edict() );
+			}
+			
+			if (m_flWetSuitTime < gpGlobals->time)
+			{
+				m_flWetSuitTime = gpGlobals->time + 1;
+	         			BONUS_FLASH( edict() );
+			}
+		}
+
+		if (m_flWetSuitFinished < gpGlobals->time)
+		{	
+			// just stopped
+			m_iItems &= ~IT_WETSUIT;
+			m_flWetSuitTime = 0;
+			m_flWetSuitFinished = 0;
+		}
+	}
+
+	// Empathy Shields	
+	if (m_flEmpathyShieldFinished)
+	{
+		// sound and screen flash when items starts to run out
+		if (m_flEmpathyShieldFinished < gpGlobals->time + 3)
+		{
+			if (m_flEmpathyShieldTime == 1)
+			{
+				CLIENT_PRINTF( edict(), print_console, "Empathy Shields are running out\n");
+				EMIT_SOUND(ENT(pev), CHAN_AUTO, "items/suit2.wav", 1, ATTN_NORM);
+				m_flEmpathyShieldTime = gpGlobals->time + 1;
+				BONUS_FLASH( edict() );
+			}
+			
+			if (m_flEmpathyShieldTime < gpGlobals->time)
+			{
+				m_flEmpathyShieldTime = gpGlobals->time + 1;
+	         			BONUS_FLASH( edict() );
+			}
+		}
+
+		if (m_flEmpathyShieldFinished < gpGlobals->time)
+		{	
+			// just stopped
+			m_iItems &= ~IT_EMPATHY_SHIELDS;
+			m_flEmpathyShieldTime = 0;
+			m_flEmpathyShieldFinished = 0;
+			pev->effects &= ~EF_BRIGHTLIGHT;
+		}
+		else
+			pev->effects |= EF_BRIGHTLIGHT;
+	}
+#endif /* HIPNOTIC */
 }
 
 void CBasePlayer::PostThink()
@@ -1161,6 +1307,43 @@ void CBasePlayer::PostThink()
 		}
 	}
 
+#ifdef HIPNOTIC
+	// earthquake
+	if( m_flEarthQuakeTime > gpGlobals->time )
+	{
+		if (!m_fEarthQuake)
+		{
+			EMIT_SOUND( ENT(pev), CHAN_VOICE, "misc/quake.wav", 1, ATTN_NONE);
+			m_fEarthQuake = TRUE;
+		}
+		if (FBitSet(pev->flags, FL_ONGROUND))
+		{
+			pev->velocity += UTIL_RandomBloodVector() * 50.0f;
+			pev->velocity.z += RANDOM_FLOAT( 0.0f, 150.0f );
+		}
+	}
+	else
+	{
+		if (m_fEarthQuake)
+		{
+			EMIT_SOUND( ENT(pev), CHAN_VOICE, "misc/quakeend.wav", 1, ATTN_NONE);
+			m_fEarthQuake = FALSE;
+		}
+	}
+
+	if( m_flWetSuitFinished > gpGlobals->time )
+	{
+		if( pev->waterlevel == 2 )
+		{
+			pev->velocity *= 0.8f;
+		}
+		if( pev->waterlevel == 3 )
+		{
+			pev->velocity *= 0.66f;
+		}
+	}
+ 
+#endif /* HIPNOTIC */
 	if (FBitSet(pev->flags, FL_ONGROUND))
 	{		
 		m_flFallVelocity = 0;
@@ -1492,7 +1675,11 @@ void CBasePlayer :: ForceClientDllUpdate( void )
 void CBasePlayer :: SetChangeParms( void )
 {
 	// remove items
+#ifndef HIPNOTIC
 	int remove_items = (IT_KEY1|IT_KEY2|IT_INVISIBILITY|IT_INVULNERABILITY|IT_SUIT|IT_QUAD); 
+#else /* HIPNOTIC */
+	int remove_items = (IT_KEY1|IT_KEY2|IT_INVISIBILITY|IT_INVULNERABILITY|IT_SUIT|IT_QUAD|IT_WETSUIT|IT_EMPATHY_SHIELDS); 
+#endif /* HIPNOTIC */
 	m_iItems &= ~remove_items;
 	
 	// cap super health
@@ -1502,6 +1689,10 @@ void CBasePlayer :: SetChangeParms( void )
 	if (pev->health < 50)
 		pev->health = 50;
 
+#ifdef HIPNOTIC
+	pev->gravity = 1.0f;
+
+#endif /* HIPNOTIC */
 	g_levelParams[PARM_ITEMS] = m_iItems;
 	g_levelParams[PARM_HEALTH] = pev->health;
 	g_levelParams[PARM_ARMORVALUE] = pev->armorvalue;
@@ -1538,11 +1729,25 @@ void CBasePlayer :: DecodeLevelParms( void )
 {
 	if (!g_changelevel) return;
 
+#ifndef HIPNOTIC
 	if (gpWorld->serverflags)
 	{
 		if( FStrEq( STRING( gpWorld->pev->model ), "maps/start.bsp" ))
 			SetNewParms (); // take away all stuff on starting new episode
 	}
+#else /* HIPNOTIC */
+	if( FStrEq( STRING( gpWorld->pev->model ), "maps/start.bsp" ))
+		SetNewParms (); // take away all stuff on starting new episode
+
+	if( FStrEq( STRING( gpWorld->pev->model ), "maps/hip1m1" ))
+		SetNewParms (); // take away all stuff on starting new episode
+
+	if( FStrEq( STRING( gpWorld->pev->model ), "maps/hip2m1" ))
+		SetNewParms (); // take away all stuff on starting new episode
+
+	if( FStrEq( STRING( gpWorld->pev->model ), "maps/hip3m1" ))
+		SetNewParms (); // take away all stuff on starting new episode
+#endif /* HIPNOTIC */
 	
 	m_iItems = g_levelParams[PARM_ITEMS];
 	pev->health = g_levelParams[PARM_HEALTH];
@@ -1577,6 +1782,13 @@ void CBasePlayer::ImpulseCommands( )
 		W_ChangeWeapon( iImpulse );
 	}
 
+#ifdef HIPNOTIC
+	if (iImpulse >= 225 && iImpulse <= 226)
+	{
+		W_ChangeWeapon( iImpulse );
+	}
+
+#endif /* HIPNOTIC */
 	switch (iImpulse)
 	{
 	case 10:
@@ -1612,8 +1824,15 @@ void CBasePlayer::CheatImpulseCommands( int iImpulse )
 		ammo_nails = 200;
 		ammo_shells = 100;
 		ammo_rockets = 100;
+#ifndef HIPNOTIC
 		ammo_cells = 200;
+#else /* HIPNOTIC */
+		ammo_cells = 100;
+#endif /* HIPNOTIC */
 		m_iItems |= IT_NAILGUN|IT_SUPER_NAILGUN|IT_SUPER_SHOTGUN|IT_ROCKET_LAUNCHER|IT_GRENADE_LAUNCHER|IT_LIGHTNING|IT_KEY1|IT_KEY2;
+#ifdef HIPNOTIC
+		m_iItems |= IT_LASER_CANNON|IT_MJOLNIR|IT_PROXIMITY_GUN;
+#endif /* HIPNOTIC */
 		m_iWeapon = IT_ROCKET_LAUNCHER;
 		CheckAmmo();
 		W_SetCurrentAmmo();
@@ -1669,6 +1888,18 @@ void CBasePlayer::CheatImpulseCommands( int iImpulse )
 			if ( pTextureName )
 				ALERT( at_console, "Texture: %s\n", pTextureName );
 		}
+#ifdef HIPNOTIC
+		break;
+	case 200:
+		m_iItems |= IT_WETSUIT;
+		m_flWetSuitTime = 1;
+		m_flWetSuitFinished = gpGlobals->time + 30;
+		break;
+	case 201:
+		m_iItems |= IT_EMPATHY_SHIELDS;
+		m_flEmpathyShieldTime = 1;
+		m_flEmpathyShieldFinished = gpGlobals->time + 30;
+#endif /* HIPNOTIC */
 		break;
 	case 255:
 		m_iItems |= IT_QUAD;

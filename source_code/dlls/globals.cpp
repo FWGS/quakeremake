@@ -41,7 +41,22 @@ DLL_GLOBAL const Vector	g_bonusColor = Vector( 215, 186, 69 );
 DLL_GLOBAL int		g_levelParams[10];	// changelevel params
 DLL_GLOBAL BOOL		g_changelevel = FALSE;
 DLL_GLOBAL int		g_intermission_running;
+#ifdef HIPNOTIC
+DLL_GLOBAL int		g_intermission_sequence;
+#endif /* HIPNOTIC */
 DLL_GLOBAL float		g_intermission_exittime;
+#ifdef HIPNOTIC
+DLL_GLOBAL float		g_intermission_seqtime;
+#endif /* HIPNOTIC */
 DLL_GLOBAL char		g_sNextMap[64];
 DLL_GLOBAL BOOL		g_registered = FALSE;
+#ifndef HIPNOTIC
 DLL_GLOBAL int		g_iXashEngineBuildNumber;
+#else /* HIPNOTIC */
+DLL_GLOBAL int		g_iXashEngineBuildNumber;
+DLL_GLOBAL BOOL		g_fHornActive = FALSE;
+DLL_GLOBAL BOOL		g_fDischarged = FALSE;
+DLL_GLOBAL BOOL		g_fEmpathyUsed = FALSE;
+DLL_GLOBAL CBaseEntity	*g_pHornCharmer = NULL;
+DLL_GLOBAL CBaseEntity	*g_pPlayerDecoy = NULL;
+#endif /* HIPNOTIC */

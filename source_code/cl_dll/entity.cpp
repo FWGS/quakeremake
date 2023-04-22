@@ -22,6 +22,10 @@
 #include "pm_shared.h"
 #include "r_studioint.h"
 #include "com_model.h"
+#ifdef HIPNOTIC
+#include "ref_params.h"
+#include "camera.h"
+#endif /* HIPNOTIC */
 
 #define DLLEXPORT __declspec( dllexport )
 
@@ -58,8 +62,16 @@ int DLLEXPORT HUD_AddEntity( int type, struct cl_entity_s *ent, const char *mode
 {
 	switch ( type )
 	{
+#ifndef HIPNOTIC
 	case ET_NORMAL:
+#endif /* ! HIPNOTIC */
 	case ET_PLAYER:
+#ifdef HIPNOTIC
+		if ( gpViewParams && (gpViewParams->viewentity > gpViewParams->maxclients ) && !cam_thirdperson )
+			return 0;
+		break;
+	case ET_NORMAL:
+#endif /* HIPNOTIC */
 	case ET_BEAM:
 	case ET_TEMPENTITY:
 	case ET_FRAGMENTED:

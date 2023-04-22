@@ -101,7 +101,36 @@ public:
 	// initialization functions
 	virtual void	Spawn( void ) { return; }
 	virtual void	Precache( void ) { return; }
+#ifndef HIPNOTIC
 	virtual void	KeyValue( KeyValueData* pkvd) { pkvd->fHandled = FALSE; }
+#else /* HIPNOTIC */
+	virtual void	KeyValue( KeyValueData* pkvd)
+	{
+		if( FStrEq( pkvd->szKeyName, "count" ))
+		{
+			m_flCount = atof( pkvd->szValue );
+			pkvd->fHandled = TRUE;
+		}
+		else if( FStrEq( pkvd->szKeyName, "cnt" ))
+		{
+			m_flCnt = atof( pkvd->szValue );
+			pkvd->fHandled = TRUE;
+		}
+		else if( FStrEq( pkvd->szKeyName, "volume" ))
+		{
+			// for ambient sounds
+			m_flVolume = atof( pkvd->szValue );
+			pkvd->fHandled = TRUE;
+		}
+		else if (FStrEq(pkvd->szKeyName, "event"))
+		{
+			// just an alias for "event"
+			pev->netname = ALLOC_STRING( pkvd->szValue );
+			pkvd->fHandled = TRUE;
+		}
+		else pkvd->fHandled = FALSE;
+	}
+#endif /* HIPNOTIC */
 	virtual int	Save( CSave &save );
 	virtual int	Restore( CRestore &restore );
 	virtual int	ObjectCaps( void ) { return 0; }
@@ -112,7 +141,11 @@ public:
 
 	static	TYPEDESCRIPTION m_SaveData[];
 
+#ifndef HIPNOTIC
 	virtual void	TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vecDir, TraceResult *ptr, int bitsDamageType);
+#else /* HIPNOTIC */
+	virtual void	TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vecDir, TraceResult *ptr, int bitsDamageType );
+#endif /* HIPNOTIC */
 	virtual int	TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType );
 	virtual int	TakeHealth( float flHealth, int bitsDamageType, BOOL bIgnore = FALSE );
 	virtual void	Killed( entvars_t *pevAttacker, int iGib );
@@ -247,6 +280,12 @@ public:
 
 	virtual int Illumination( ) { return GETENTITYILLUM( ENT( pev ) ); };
 
+#ifdef HIPNOTIC
+	virtual float GetCount( void ) { return 0.0f; }				// func_counter support
+
+	int	*m_pCurrentAmmo;						// Always points to one of the four ammo counts below
+
+#endif /* HIPNOTIC */
 	//We use this variables to store each ammo count.
 	int	ammo_shells;
 	int	ammo_nails;
@@ -254,8 +293,27 @@ public:
 	int	ammo_cells;
 
 	BOOL	m_bAxHitMe;
+#ifdef HIPNOTIC
+	BOOL	m_bStruckByMjolnir;
+#endif /* HIPNOTIC */
 	float	m_flShowHostile;
 	float	m_flAttackFinished;
+#ifdef HIPNOTIC
+	float	m_flLightningSoundTime;
+	float	m_flLightningTime;
+	BOOL	m_bGorging;	// monster_gremlin stuff
+
+	Vector	neworigin;
+	Vector	oldorigin;
+	int	m_iRotateType;
+
+	CBaseEntity *m_pNextEnt;	// linked list for tesla
+
+	// frequently used variables
+	float	m_flCount;
+	float	m_flCnt;
+	float	m_flVolume;
+#endif /* HIPNOTIC */
 };
 
 
@@ -326,6 +384,9 @@ public:
 	int  LookupSequence ( const char *label );
 	float SequenceDuration( void );
 	void ResetSequenceInfo ( );
+#ifdef HIPNOTIC
+	const char *GetNameForActivity( int activity );
+#endif /* HIPNOTIC */
 	void DispatchAnimEvents ( float flFutureInterval = 0.1 ); // Handle events that have happend since last time called up until X seconds into the future
 	virtual void HandleAnimEvent( MonsterEvent_t *pEvent ) { return; };
 	float SetBoneController ( int iController, float flValue );
@@ -388,6 +449,20 @@ public:
 	void EXPORT AngularMoveDone( void );
 };
 
+#ifdef HIPNOTIC
+class CFuncMultiExploder : public CBaseToggle
+{
+public:
+	void Spawn( void );
+	void Precache( void );
+	void KeyValue( KeyValueData *pkvd );
+	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+	void EXPORT ExplosionThink( void );
+
+	static void MultiExplosion( const Vector &loc, float flRad, float flDamage, float dur, float pause, float vol );
+};
+
+#endif /* HIPNOTIC */
 #define SetMoveDone( a ) m_pfnCallWhenMoveDone = static_cast <void (CBaseToggle::*)(void)> (a)
 
 // people gib if their health is <= this at the time of death
@@ -470,9 +545,17 @@ public:
 				// keep track of completed episodes
 	int	total_secrets;
 	int	total_monsters;
+#ifdef HIPNOTIC
+	int	total_gremlins;	// count of gremlins that placed on a map by level-designer
+#endif /* HIPNOTIC */
 	
 	int	found_secrets;	// number of secrets found
 	int	killed_monsters;	// number of monsters killed
+#ifdef HIPNOTIC
+
+	int	num_prox_grenades;	// count of alive proximity grenades
+	int	num_spawn_gremlins;	// count of splitted gremlins (reborned from gibs)
+#endif /* HIPNOTIC */
 
 	string_t	levelname;	// pev->message handled here
 };

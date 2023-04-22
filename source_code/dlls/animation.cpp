@@ -37,8 +37,10 @@ typedef unsigned char byte;
 #include "activity.h"
 #endif
 
+#ifndef HIPNOTIC
 #include "activitymap.h"
 
+#endif /* ! HIPNOTIC */
 #ifndef ANIMATION_H
 #include "animation.h"
 #endif

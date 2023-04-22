@@ -21,7 +21,12 @@ typedef enum
 	ATTACK_STRAIGHT,
 	ATTACK_SLIDING,
 	ATTACK_MELEE,
+#ifndef HIPNOTIC
 	ATTACK_MISSILE
+#else /* HIPNOTIC */
+	ATTACK_MISSILE,
+	ATTACK_DODGING
+#endif /* HIPNOTIC */
 } ATTACKSTATE;
 
 typedef enum
@@ -31,7 +36,13 @@ typedef enum
 	STATE_RUN,
 	STATE_ATTACK,
 	STATE_PAIN,
+#ifndef HIPNOTIC
 	STATE_DEAD
+#else /* HIPNOTIC */
+	STATE_DEAD,
+	STATE_CUSTOM,		// controlled by monster-specific code
+	STATE_REBORN
+#endif /* HIPNOTIC */
 } AISTATE;
 
 // distance ranges
@@ -43,6 +54,13 @@ typedef enum
 	RANGE_FAR
 } RANGETYPE;
 
+#ifdef HIPNOTIC
+#define CHARMED_RADIUS		1500
+#define MAX_CHARMER_DISTANCE		200
+#define MIN_CHARMER_DISTANCE		150
+#define TOOCLOSE_CHARMER_DISTANCE	120
+
+#endif /* HIPNOTIC */
 //
 // generic Monster
 //
@@ -71,6 +89,15 @@ public:
 	BOOL		m_fEnemyInFront;
 	BOOL		m_fEnemyVisible;
 
+#ifdef HIPNOTIC
+	BOOL		m_fCharmed;	// monster is charmed
+	EHANDLE		m_hCharmer;
+	int		m_iHuntingCharmer;
+	EHANDLE		m_hTriggerField;
+
+	BOOL		m_bRunStraight;	// armagon stuff
+
+#endif /* HIPNOTIC */
 	virtual CQuakeMonster *GetMonster( void ) { return this; }
 
 	// overloaded monster functions (same as th_callbacks in quake)
@@ -83,6 +110,9 @@ public:
 	virtual void	MonsterKilled( entvars_t *pevAttacker, int iGib ) {}
 	virtual void	MonsterSight( void );
 	virtual void	MonsterAttack( void );
+#ifdef HIPNOTIC
+	virtual void	MonsterCustom( void ) {}
+#endif /* HIPNOTIC */
 	virtual void	CornerReached( void ) {}	// called while path_corner is reached
 
 	virtual BOOL	MonsterCheckAnyAttack( void );
@@ -95,9 +125,21 @@ public:
 	void EXPORT	MonsterUse( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	void EXPORT	MonsterDeathUse( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 
+#ifndef HIPNOTIC
 	void		TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vecDir, TraceResult *ptr, int bitsDamageType );
+#else /* HIPNOTIC */
+	virtual void	TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vecDir, TraceResult *ptr, int bitsDamageType );
+#endif /* HIPNOTIC */
 	int		TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType );
 	virtual void	Killed( entvars_t *pevAttacker, int iGib );
+#ifdef HIPNOTIC
+
+	// global charmed stuff
+	void		UpdateCharmerGoal( void );
+	void		HuntCharmer( void );
+	void		FleeCharmer( void );
+	void		StopHuntingCharmer( void );
+#endif /* HIPNOTIC */
 		
 	// common utility functions
 	void		SetEyePosition( void );
@@ -118,7 +160,11 @@ public:
 	// MoveExecute functions
 	BOOL		CloseEnough( float flDist );
 	BOOL		WalkMove( float flYaw, float flDist );
+#ifndef HIPNOTIC
 	void		MoveToGoal( float flDist );
+#else /* HIPNOTIC */
+	int		MoveToGoal( float flDist );
+#endif /* HIPNOTIC */
 
 	virtual void	AI_Forward( float flDist );
 	virtual void	AI_Backward( float flDist );
@@ -131,6 +177,9 @@ public:
 	virtual void	AI_Run_Melee( void );
 	virtual void	AI_Run_Missile( void );
 	virtual void	AI_Run_Slide( void );
+#ifdef HIPNOTIC
+	virtual void	AI_Run_Dodge( void );
+#endif /* HIPNOTIC */
 	virtual void	AI_Charge( float flDist );
 	virtual void	AI_Charge_Side( void );
 	virtual void	AI_Face( void );
@@ -163,8 +212,13 @@ public:
 	void EXPORT WaitTillLand( void );
 	Vector VelocityForDamage( float flDamage );
 
+#ifndef HIPNOTIC
 	static void ThrowHead( const char *szGibName, entvars_t *pevVictim );
 	static void ThrowGib( const char *szGibName, entvars_t *pevVictim );
+#else /* HIPNOTIC */
+	static void ThrowHead( const char *szGibName, entvars_t *pevVictim, float zoffset = 1.0f );
+	static void ThrowGib( const char *szGibName, entvars_t *pevVictim, float zoffset = 1.0f );
+#endif /* HIPNOTIC */
 
 	int		m_bloodColor;
 	int		m_cBloodDecals;

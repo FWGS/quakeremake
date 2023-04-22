@@ -499,7 +499,11 @@ void CTeleTrain :: Spawn( void )
 	{
 		ALERT( at_error, "misc_teleporttrain without a target. Removed\n" );
 
+#ifndef HIPNOTIC
 		pev->nextthink = pev->ltime + 0.1;
+#else /* HIPNOTIC */
+		pev->nextthink = gpGlobals->time + 0.1;
+#endif /* HIPNOTIC */
 		SetThink( SUB_Remove );
 		return; 
 	}
@@ -516,4 +520,237 @@ void CTeleTrain :: Spawn( void )
 	// a chance to spawn
 	pev->nextthink = pev->ltime + 0.1;
 	SetThink( Find );
+#ifdef HIPNOTIC
+}
+
+/*QUAKED func_train2 (0 .5 .8) ?
+This is a modification of the standard func_train entity.
+It is functionally equivalent, except that it removes a slight delay that
+would occur after each path entry, and it adds a speed variable to the
+path_corner entity.
+
+"noise" contains the name of the sound to play when train stops.
+"noise1" contains the name of the sound to play when train moves.
+Both "noise" and "noise1" defaults depend upon "sounds" variable.
+
+In path_corner, set speed to be the new speed of the train after it reaches
+the path change.  If speed is -1, the train will warp directly to the next
+path change after the specified wait time.
+
+Also in path_corner, if wait is set to -1, the train will wait until it is
+retriggered before moving on to the next goal.
+
+Here is a reiteration of the func_train docs:
+
+Trains are moving platforms that players can ride.
+The targets origin specifies the min point of the train at each corner.
+The train spawns at the first target it is pointing at.
+If the train is the target of a button or trigger, it will not begin moving until activated.
+speed	default 100
+dmg		default	2
+sounds
+1) ratchet metal
+
+*/
+class CFuncTrain2 : public CBaseToggle
+{
+public:
+	void Spawn( void );
+	void Precache( void );
+	void Blocked( CBaseEntity *pOther );
+	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+
+	void EXPORT Wait( void );
+	void EXPORT Next( void );
+	void EXPORT Find( void );
+};
+
+LINK_ENTITY_TO_CLASS( func_train2, CFuncTrain2 );
+
+void CFuncTrain2 :: Precache( void )
+{
+	PRECACHE_SOUND( (char *)STRING( pev->noise ));
+	PRECACHE_SOUND( (char *)STRING( pev->noise1 ));
+}
+
+void CFuncTrain2 :: Spawn( void )
+{
+	if (pev->speed == 0)
+		pev->speed = 100;
+
+	if ( FStringNull(pev->target) )
+	{
+		ALERT( at_error, "func_train2 without a target. Removed\n" );
+
+		pev->nextthink = pev->ltime + 0.1;
+		SetThink( SUB_Remove );
+		return; 
+	}	
+
+	if (!pev->dmg)
+		pev->dmg = 2;
+
+	if( !pev->noise )
+	{
+		switch (m_sounds)
+		{
+		case 0: pev->noise = MAKE_STRING("misc/null.wav"); break;
+		case 1: pev->noise = MAKE_STRING("plats/train2.wav"); break;
+		}
+	}
+
+	if( !pev->noise1 )
+	{
+		switch (m_sounds)
+		{
+		case 0: pev->noise1 = MAKE_STRING("misc/null.wav"); break;
+		case 1: pev->noise1 = MAKE_STRING("plats/train1.wav"); break;
+		}
+	}
+
+	Precache();
+
+	m_flCnt = 1.0f;
+	pev->solid = SOLID_BSP;	
+	pev->movetype = MOVETYPE_PUSH;
+
+	SET_MODEL( ENT(pev), STRING(pev->model) );
+	UTIL_SetSize (pev, pev->mins, pev->maxs);
+	UTIL_SetOrigin(pev, pev->origin);
+
+	// start trains on the second frame, to make sure their targets have had
+	// a chance to spawn
+	pev->nextthink = pev->ltime + 0.1;
+	SetThink( Find );
+}
+
+void CFuncTrain2 :: Blocked( CBaseEntity *pOther )
+{
+	if (pev->pain_finished > gpGlobals->time)
+		return;
+
+	pev->pain_finished = gpGlobals->time + 0.5;
+	pOther->TakeDamage(pev, pev, pev->dmg, DMG_CRUSH);
+}
+
+void CFuncTrain2 :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
+{
+	if (m_pfnThink != Find)
+	{
+		if( pev->velocity != g_vecZero )
+			return; // already activated
+	}
+	Next();
+}
+
+void CFuncTrain2 :: Find( void )
+{
+	edict_t	*pentTarg = FIND_ENTITY_BY_TARGETNAME( NULL, STRING( pev->target ));
+
+	if( FNullEnt( pentTarg ))
+	{
+		ALERT( at_error, "func_train couldn't find target %s. Removed\n", STRING( pev->target ));
+
+		pev->nextthink = pev->ltime + 0.1;
+		SetThink( SUB_Remove );
+		return; 
+	}
+
+	m_pGoalEnt = CBaseEntity :: Instance( pentTarg );
+	m_flCnt = VARS( pentTarg )->speed;
+		
+	pev->target = VARS( pentTarg )->target;
+	UTIL_SetOrigin( pev, VARS( pentTarg )->origin - pev->mins );
+		
+	if ( FStringNull(pev->targetname) )
+	{	// not triggered, so start immediately
+		pev->nextthink = pev->ltime + 0.1;
+		SetThink( Next );
+	}
+}
+
+void CFuncTrain2 :: Wait( void )
+{
+	if (m_flWait)
+	{
+		STOP_SOUND (ENT(pev), CHAN_VOICE, (char*)STRING(pev->noise1));
+		EMIT_SOUND (ENT(pev), CHAN_VOICE, (char*)STRING(pev->noise), 1, ATTN_NORM);
+
+		if( m_flWait != -1.0f )
+		{
+			pev->nextthink = pev->ltime + m_flWait;
+			m_flWait = 0.0f;
+		}
+	}
+	else
+		pev->nextthink = pev->ltime + 0.1;
+
+	SetThink( Next );	
+}
+
+void CFuncTrain2 :: Next( void )
+{
+	CBaseEntity *pTarg;
+	float curspeed;
+
+	// Get the speed of the current path_corner.
+	// (we must save this off at each path change since
+	// we don't have a pointer to the current path_corner).
+	curspeed = m_flCnt;
+	
+	// now find our next target
+	pTarg = GetNextTarget();
+
+	if( !pTarg )
+	{
+		ALERT( at_error, "func_train: no next target %s.\n", STRING( pev->target ));
+		SetThink( NULL );
+		return; 
+	}
+
+	pev->target = pTarg->pev->target;
+	m_flCnt = pTarg->pev->speed;
+	m_flWait = pTarg->GetDelay();
+
+	EMIT_SOUND (ENT(pev), CHAN_VOICE, (char*)STRING(pev->noise1), 1, ATTN_NORM);
+
+ 	if( m_flWait )
+	{
+		SetThink( Wait );
+	}
+	else
+	{
+		SetThink( Next );
+	}
+
+	if( m_pGoalEnt && m_pGoalEnt->pev->netname )
+	{
+		if( m_pGoalEnt->pev->message )
+		{
+			CenterPrint( UTIL_PlayerByIndex( 1 )->pev, STRING( m_pGoalEnt->pev->message ));
+			m_pGoalEnt->pev->message = iStringNull;
+		}
+
+		// Trigger any events that should happen at the corner.
+		FireTargets( STRING(m_pGoalEnt->pev->netname), this, m_pGoalEnt, USE_TOGGLE, 0.0f );
+	}
+
+	m_pGoalEnt = pTarg;
+
+	if( curspeed == -1.0f )
+	{
+		// Warp to the next path_corner
+         		UTIL_SetOrigin( pev, pTarg->pev->origin - pev->mins );
+		pev->nextthink = pev->ltime + 0.01;
+	}
+	else
+	{
+		// check if there's a speed change
+		if( curspeed > 0.0f ) pev->speed = curspeed;
+
+		// travel to the next path change
+		SetMoveDone( m_pfnThink );
+		LinearMove( pTarg->pev->origin - pev->mins, pev->speed );
+	}
+#endif /* HIPNOTIC */
 }

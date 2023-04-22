@@ -79,6 +79,17 @@
 #define IT_SUIT			(1<<21)
 #define IT_QUAD			(1<<22)
 
+#ifdef HIPNOTIC
+// hipnotic weapons
+#define IT_MJOLNIR			(1<<7)	// this replaces extra weapon
+#define IT_PROXIMITY_GUN		(1<<16)	// this replaces IT_SUPERHEALTH (was never used)
+#define IT_LASER_CANNON		(1<<23)
+
+// hipnotic items
+#define IT_WETSUIT			(1<<25)
+#define IT_EMPATHY_SHIELDS		(1<<26)
+
+#endif /* HIPNOTIC */
 //
 // Quake stats are integers communicated to the client by the server
 //

@@ -392,7 +392,11 @@ void V_CalcPowerupCshift (void)
 		gHUD.cshifts[CSHIFT_POWERUP].destcolor[2] = 255;
 		gHUD.cshifts[CSHIFT_POWERUP].percent = 30;
 	}
+#ifndef HIPNOTIC
 	else if (gHUD.items & IT_SUIT)
+#else /* HIPNOTIC */
+	else if (gHUD.items & (IT_SUIT|IT_WETSUIT))
+#endif /* HIPNOTIC */
 	{
 		gHUD.cshifts[CSHIFT_POWERUP].destcolor[0] = 0;
 		gHUD.cshifts[CSHIFT_POWERUP].destcolor[1] = 255;

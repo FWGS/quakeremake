@@ -243,6 +243,9 @@ extern Vector		UTIL_ClampVectorToBox( const Vector &input, const Vector &clampSi
 extern float		UTIL_Approach( float target, float value, float speed );
 extern float		UTIL_ApproachAngle( float target, float value, float speed );
 extern float		UTIL_AngleDistance( float next, float cur );
+#ifdef HIPNOTIC
+extern void		UTIL_NormalizeAngles( Vector &ang );
+#endif /* HIPNOTIC */
 
 extern char			*UTIL_VarArgs( char *format, ... );
 extern void			UTIL_Remove( CBaseEntity *pEntity );
@@ -334,6 +337,14 @@ extern DLL_GLOBAL const Vector g_vecZero;
 extern DLL_GLOBAL const Vector g_bonusColor;
 extern DLL_GLOBAL Vector g_vecAttackDir;
 extern DLL_GLOBAL int g_iXashEngineBuildNumber;
+#ifdef HIPNOTIC
+extern DLL_GLOBAL BOOL g_fHornActive;
+extern DLL_GLOBAL BOOL g_fDischarged;
+extern DLL_GLOBAL BOOL g_fEmpathyUsed;
+extern DLL_GLOBAL CBaseEntity	*g_pHornCharmer;
+extern DLL_GLOBAL CBaseEntity	*g_pPlayerDecoy;
+extern DLL_GLOBAL float g_flVisibleDistance;
+#endif /* HIPNOTIC */
 
 #define PARM_ITEMS		0
 #define PARM_HEALTH		1
@@ -349,6 +360,10 @@ extern DLL_GLOBAL int g_iXashEngineBuildNumber;
 extern DLL_GLOBAL int	g_levelParams[10];	// changelevel params
 extern DLL_GLOBAL BOOL	g_changelevel;
 extern DLL_GLOBAL int	g_intermission_running;
+#ifdef HIPNOTIC
+extern DLL_GLOBAL int	g_intermission_sequence;
+extern DLL_GLOBAL float	g_intermission_seqtime;
+#endif /* HIPNOTIC */
 extern DLL_GLOBAL float	g_intermission_exittime;
 extern DLL_GLOBAL char	g_sNextMap[64];
 extern DLL_GLOBAL BOOL	g_registered;

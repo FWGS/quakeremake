@@ -27,6 +27,9 @@
 extern int gmsgTempEntity;
 
 #define SF_SPAWN_CRUCIFIED	1
+#ifdef HIPNOTIC
+#define SF_SPAWN_LYINGDOWN	4
+#endif /* HIPNOTIC */
 
 //=========================================================
 // Monster's Anim Events Go Here
@@ -64,8 +67,14 @@ public:
 	static const char *pDeathSounds[];
 
 	void EXPORT ZombieDefeated( void );
+#ifdef HIPNOTIC
+	void EXPORT ZombieLyingDown( void );
+#endif /* HIPNOTIC */
 
 	void Killed( entvars_t *pevAttacker, int iGib );
+#ifdef HIPNOTIC
+	void SetPainState( void );
+#endif /* HIPNOTIC */
 };
 
 LINK_ENTITY_TO_CLASS( monster_zombie, CZombie );
@@ -218,6 +227,17 @@ void CZombie :: Killed( entvars_t *pevAttacker, int iGib )
 	UTIL_Remove( this );
 }
 
+#ifdef HIPNOTIC
+void CZombie :: SetPainState( void )
+{
+	SetActivity( ACT_BIG_FLINCH );
+	m_iAIState = STATE_PAIN;
+	pev->frame = 100.0f;
+	pev->frags = 1.0f;
+	pev->impulse = 2;
+}
+
+#endif /* HIPNOTIC */
 //=========================================================
 // Spawn
 //=========================================================
@@ -253,6 +273,28 @@ void CZombie :: Spawn( void )
 	else
 	{
 		WalkMonsterInit ();
+#ifdef HIPNOTIC
+
+		if( FBitSet( pev->spawnflags, SF_SPAWN_LYINGDOWN ))
+		{
+			pev->takedamage = DAMAGE_AIM;
+			pev->ideal_yaw = pev->angles.y;
+
+			if (!pev->yaw_speed)
+				pev->yaw_speed = 20;
+
+			SetEyePosition();
+			SetUse( MonsterUse );
+                              SetPainState();
+
+			pev->flags |= FL_MONSTER;
+			m_flPauseTime = 99999999;
+			SetThink( ZombieLyingDown );
+			pev->nextthink = gpGlobals->time + 0.1f;
+
+			StopAnimation();
+		}
+#endif /* HIPNOTIC */
 	}
 }
 
@@ -295,6 +337,22 @@ void CZombie :: ZombieDefeated( void )
 		SetThink( MonsterThink );
 		pev->nextthink = gpGlobals->time + 0.1f;
 	}
+#ifdef HIPNOTIC
+}
+
+void CZombie :: ZombieLyingDown( void )
+{
+	pev->health = 60;
+
+	if( FindTarget ())
+	{
+		SetPainState(); // restore pain state
+		ResetSequenceInfo( );
+		SetThink( MonsterThink );
+	}
+
+	pev->nextthink = gpGlobals->time + 0.1f;
+#endif /* HIPNOTIC */
 }
 
 //=========================================================

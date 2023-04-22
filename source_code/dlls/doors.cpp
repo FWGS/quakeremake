@@ -623,7 +623,11 @@ void CBaseDoor::DoorGoUp( void )
 	SetMoveDone( DoorHitTop );
 	LinearMove(m_vecPosition2, pev->speed);
 
+#ifndef HIPNOTIC
 	SUB_UseTargets( this, USE_TOGGLE, 0 );
+#else /* HIPNOTIC */
+	SUB_UseTargets( m_hActivator, USE_TOGGLE, 0 );
+#endif /* HIPNOTIC */
 }
 
 void CBaseDoor::Blocked( CBaseEntity *pOther )
@@ -794,7 +798,11 @@ void CSecretDoor::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE u
 
 	pev->message = iStringNull; // no more message
 
+#ifndef HIPNOTIC
 	SUB_UseTargets( this, USE_TOGGLE, 0 ); // fire all targets / killtargets
+#else /* HIPNOTIC */
+	SUB_UseTargets( pActivator, USE_TOGGLE, 0 ); // fire all targets / killtargets
+#endif /* HIPNOTIC */
 
 	if( !FBitSet( pev->spawnflags, SF_SECRET_NO_SHOOT ))
 		pev->takedamage = DAMAGE_NO;

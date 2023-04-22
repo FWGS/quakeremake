@@ -131,6 +131,18 @@ TYPEDESCRIPTION	CBaseEntity::m_SaveData[] =
 	DEFINE_FIELD( CBaseEntity, m_flShowHostile, FIELD_TIME ),
 	DEFINE_FIELD( CBaseEntity, m_flAttackFinished, FIELD_TIME ),
 	DEFINE_FIELD( CBaseEntity, m_iDeathType, FIELD_STRING ),
+#ifdef HIPNOTIC
+	DEFINE_FIELD( CBaseEntity, m_iRotateType, FIELD_INTEGER ),
+	DEFINE_FIELD( CBaseEntity, neworigin, FIELD_POSITION_VECTOR ),	// rotate objects uses this
+	DEFINE_FIELD( CBaseEntity, oldorigin, FIELD_POSITION_VECTOR ),
+	DEFINE_FIELD( CBaseEntity, m_flVolume, FIELD_FLOAT ),
+	DEFINE_FIELD( CBaseEntity, m_flCount, FIELD_FLOAT ),
+	DEFINE_FIELD( CBaseEntity, m_flCnt, FIELD_FLOAT ),
+	DEFINE_FIELD( CBaseEntity, m_bStruckByMjolnir, FIELD_BOOLEAN ),
+	DEFINE_FIELD( CBaseEntity, m_bAxHitMe, FIELD_BOOLEAN ),
+	DEFINE_FIELD( CBaseEntity, m_pNextEnt, FIELD_CLASSPTR ),
+	DEFINE_FIELD( CBaseEntity, m_bGorging, FIELD_BOOLEAN ),
+#endif /* HIPNOTIC */
 };
 
 int CBaseEntity::Save( CSave &save )

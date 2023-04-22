@@ -46,7 +46,27 @@ LINK_ENTITY_TO_CLASS( info_null, CNullEntity );
 /*QUAKED info_notnull (0 0.5 0) (-4 -4 -4) (4 4 4)
 Used as a positional target for lightning.
 */
+#ifndef HIPNOTIC
 LINK_ENTITY_TO_CLASS( info_notnull, CPointEntity );
+#else /* HIPNOTIC */
+class CInfoNotNull : public CPointEntity
+{
+	void KeyValue( KeyValueData *pkvd );
+};
+
+// Sets toucher's friction to m_frictionFraction (1.0 = normal friction)
+void CInfoNotNull :: KeyValue( KeyValueData *pkvd )
+{
+	if (FStrEq(pkvd->szKeyName, "mangle"))	// a quake alias
+	{
+		UTIL_StringToVector( (float *)pev->angles, pkvd->szValue );
+		pkvd->fHandled = TRUE;
+	}
+	else
+		CBaseEntity::KeyValue( pkvd );
+}
+LINK_ENTITY_TO_CLASS( info_notnull, CInfoNotNull );
+#endif /* HIPNOTIC */
 
 /*QUAKED info_player_deathmatch (1 0 1) (-16 -16 -24) (16 16 24)
 potential spawning position for deathmatch games

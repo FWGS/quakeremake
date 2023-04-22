@@ -257,8 +257,13 @@ void CShubNiggurath :: Finale4( void )
 	STOP_SOUND (ENT(pev), CHAN_BODY, "ambience/rumble.wav");
 
 	MESSAGE_BEGIN( MSG_ALL, SVC_CDTRACK );
+#ifndef HIPNOTIC
 		WRITE_BYTE( 13 );
 		WRITE_BYTE( 12 );
+#else /* HIPNOTIC */
+		WRITE_BYTE( 10 );
+		WRITE_BYTE( 11 );
+#endif /* HIPNOTIC */
 	MESSAGE_END();
 
 	LIGHT_STYLE( 0, "m" );

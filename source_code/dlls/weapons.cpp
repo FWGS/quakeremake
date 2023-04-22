@@ -97,6 +97,9 @@ BOOL IsSkySurface( CBaseEntity *pEnt, const Vector &point, const Vector &vecDir 
 }
 
 LINK_ENTITY_TO_CLASS( spike, CNail );
+#ifdef HIPNOTIC
+LINK_ENTITY_TO_CLASS( hiplaser, CNail );
+#endif /* HIPNOTIC */
 
 //=========================================================
 CNail *CNail::CreateNail( Vector vecOrigin, Vector vecDir, CBaseEntity *pOwner )
@@ -137,6 +140,39 @@ CNail *CNail::CreateKnightSpike( Vector vecOrigin, Vector vecDir, CBaseEntity *p
 	return pNail;
 }
 
+#ifdef HIPNOTIC
+CNail *CNail::CreateHipLaser( Vector vecOrigin, Vector vecDir, CBaseEntity *pOwner )
+{
+	CNail *pLaser = GetClassPtr((CNail *)NULL );
+
+	EMIT_SOUND (ENT(pOwner->pev),CHAN_WEAPON, "hipweap/laserg.wav", 1, ATTN_NORM);
+	UTIL_SetOrigin( pLaser->pev, vecOrigin );
+
+	pLaser->pev->speed = 1000.0f;
+	pLaser->pev->velocity = vecDir * pLaser->pev->speed;
+	pLaser->pev->movedir = pLaser->pev->velocity;
+	pLaser->pev->angles = UTIL_VecToAngles( vecDir );
+	pLaser->pev->owner = pOwner->edict();
+	pLaser->pev->enemy = pOwner->edict();
+	pLaser->Spawn();
+	SET_MODEL( ENT(pLaser->pev), "models/lasrspik.mdl" );
+	pLaser->pev->classname = MAKE_STRING( "hiplaser" );
+	pLaser->pev->animtime = gpGlobals->time;
+	pLaser->pev->avelocity = Vector( 0, 0, 400 );
+	pLaser->pev->air_finished = gpGlobals->time + 5.0f;
+	pLaser->SetThink( &CNail::LaserThink );
+	pLaser->pev->nextthink = gpGlobals->time + 0.1f;
+	pLaser->SetTouch( &CNail::LaserTouch );
+	pLaser->pev->framerate = 1.0f;
+	pLaser->pev->dmg = 18;
+
+	if( RANDOM_FLOAT(0.0f, 1.0f) < 0.15f)
+		pLaser->pev->effects |= EF_DIMLIGHT;
+
+	return pLaser;
+}
+
+#endif /* HIPNOTIC */
 //=========================================================
 void CNail::Spawn( void )
 {
@@ -295,6 +331,79 @@ void CNail::ExplodeTouch( CBaseEntity *pOther )
 	SetTouch( NULL );
 }
 
+#ifdef HIPNOTIC
+void CNail::LaserTouch( CBaseEntity *pOther )
+{
+	pev->owner = NULL;
+	pev->impulse++;
+
+	TraceResult tr = UTIL_GetGlobalTrace();
+
+	// Remove if we've hit skybrush
+	if ( IsSkySurface( pOther, tr.vecEndPos, pev->velocity.Normalize( ) ) )
+	{
+		UTIL_Remove( this );
+		return;
+	}
+
+	Vector oldvel = pev->movedir.Normalize();
+	Vector spot1 = pev->origin - (16.0f * oldvel);
+	Vector spot2 = pev->origin + (16.0f * oldvel);
+	UTIL_TraceLine( spot1, spot2, dont_ignore_monsters, edict(), &tr );
+
+	pev->origin = tr.vecEndPos;
+
+	if (pOther->pev->takedamage && pOther->pev->health)
+	{
+		if (pev->enemy == pOther->edict())
+			pev->dmg *= 0.5f;
+
+		SpawnBlood( pev->origin, pOther->BloodColor(), pev->dmg );// a little surface blood.
+		TraceBleed( pev->dmg, oldvel, &tr, DMG_GENERIC );
+		pOther->TakeDamage( pev, VARS(pev->enemy), pev->dmg, DMG_GENERIC );
+	}
+	else if ((pev->impulse == 3) || (RANDOM_FLOAT(.0f, 1.0f) < 0.15f))
+	{
+		MESSAGE_BEGIN( MSG_BROADCAST, gmsgTempEntity );
+			WRITE_BYTE( TE_GUNSHOT );
+			WRITE_COORD( pev->origin.x );
+			WRITE_COORD( pev->origin.y );
+			WRITE_COORD( pev->origin.z );
+		MESSAGE_END();
+	}
+	else
+	{
+		pev->dmg *= 0.9f;
+		pev->velocity = oldvel+(2*tr.vecPlaneNormal);
+		pev->velocity = pev->velocity.Normalize() * pev->speed;
+		pev->movedir = pev->velocity;
+		pev->flags &= ~FL_ONGROUND;
+
+		EMIT_SOUND (ENT(pev), CHAN_WEAPON, "hipweap/laserric.wav", 1, ATTN_STATIC);
+		return;
+	}
+
+	EMIT_SOUND(ENT(pev), CHAN_WEAPON, "enforcer/enfstop.wav", 1, ATTN_STATIC);
+	UTIL_Remove(this);
+}
+
+void CNail::LaserThink( void )
+{
+	if( gpGlobals->time > pev->air_finished)
+	{
+		SetTouch( NULL );
+		UTIL_Remove( this );
+		return;
+	}
+
+	pev->flags &= ~FL_ONGROUND;
+
+	pev->velocity = pev->movedir;
+	pev->angles = UTIL_VecToAngles(pev->velocity);
+	pev->nextthink = gpGlobals->time + 0.1f;
+}
+
+#endif /* HIPNOTIC */
 LINK_ENTITY_TO_CLASS( laser, CLaser );
 
 //=========================================================
@@ -306,6 +415,9 @@ CLaser *CLaser::LaunchLaser( Vector vecOrigin, Vector vecAngles, CBaseEntity *pO
 
 	pLaser->pev->velocity = vecAngles * 600;
 	pLaser->pev->angles = UTIL_VecToAngles( vecAngles );
+#ifdef HIPNOTIC
+	pLaser->pev->spawnflags = pOwner->pev->spawnflags;
+#endif /* HIPNOTIC */
 	pLaser->pev->owner = pOwner->edict();
 	pLaser->Spawn();
 	pLaser->pev->classname = MAKE_STRING( "laser" );
@@ -354,7 +466,12 @@ void CLaser::LaserTouch( CBaseEntity *pOther )
 		return;
 	}
 
+#ifndef HIPNOTIC
 	EMIT_SOUND(ENT(pOther->pev), CHAN_WEAPON, "enforcer/enfstop.wav", 1, ATTN_NORM);
+#else /* HIPNOTIC */
+	if( !FBitSet( pev->spawnflags, SF_TRAP_SILENT ))
+		EMIT_SOUND(ENT(pOther->pev), CHAN_WEAPON, "enforcer/enfstop.wav", 1, ATTN_NORM);
+#endif /* HIPNOTIC */
 
 	// Hit something that bleeds
 	if (pOther->pev->takedamage)
@@ -388,6 +505,9 @@ void CLaser::LaserTouch( CBaseEntity *pOther )
 
 LINK_ENTITY_TO_CLASS( grenade, CRocket );
 LINK_ENTITY_TO_CLASS( rocket, CRocket );
+#ifdef HIPNOTIC
+LINK_ENTITY_TO_CLASS( proximity_grenade, CRocket );
+#endif /* HIPNOTIC */
 
 //=========================================================
 CRocket *CRocket::CreateRocket( Vector vecOrigin, Vector vecAngles, CBaseEntity *pOwner )
@@ -464,6 +584,49 @@ CRocket *CRocket::CreateGrenade( Vector vecOrigin, Vector vecVelocity, CBaseEnti
 	return pRocket;
 }
 
+#ifdef HIPNOTIC
+CRocket *CRocket::CreateProxGrenade( Vector vecOrigin, Vector vecVelocity, CBaseEntity *pOwner )
+{
+	CRocket *pRocket = GetClassPtr( (CRocket *)NULL );
+
+	UTIL_SetOrigin( pRocket->pev, vecOrigin );
+	SET_MODEL(ENT(pRocket->pev), "models/proxbomb.mdl");
+	UTIL_SetSize(pRocket->pev, Vector( -1, -1, -1), Vector(1, 1, 1));
+	pRocket->pev->classname = MAKE_STRING("proximity_grenade");
+	pRocket->pev->owner = pOwner->edict();
+	pRocket->pev->enemy = pOwner->edict();
+
+	// Setup
+	pRocket->pev->movetype = MOVETYPE_TOSS;
+	pRocket->pev->effects |= EF_FULLBRIGHT;	// FIXME: make an additive fullbright texture for bomb model
+	pRocket->pev->solid = SOLID_BBOX;
+
+	pRocket->pev->avelocity = Vector(100,600,100);
+	
+	// Velocity
+	pRocket->pev->velocity = vecVelocity;
+	pRocket->pev->angles = UTIL_VecToAngles(vecVelocity);
+
+	// Touch
+	pRocket->SetTouch( &CRocket::ProximityTouch );
+	pRocket->pev->dmg = 95.0f;
+
+	// set newmis duration
+	if ( gpGlobals->deathmatch == 4 )
+	{
+		pRocket->m_flAttackFinished = gpGlobals->time + 1.1;	// What's this used for?
+		if (pOwner)
+			pOwner->TakeDamage( pOwner->pev, pOwner->pev, 10, DMG_GENERIC );
+	}
+
+	pRocket->pev->nextthink = gpGlobals->time + 2.0f;
+	pRocket->SetThink( &CRocket::ProximityThink );
+	pRocket->m_flDelay = gpGlobals->time + 15.0f + RANDOM_FLOAT( 0.0f, 10.0f );
+   
+	return pRocket;
+}
+
+#endif /* HIPNOTIC */
 //=========================================================
 void CRocket::Spawn( void )
 {
@@ -549,6 +712,86 @@ void CRocket::Explode()
 	UTIL_Remove( this );
 }
 
+#ifdef HIPNOTIC
+void CRocket::ProximityThink( void )
+{
+	if ((gpGlobals->time > m_flDelay) || (gpWorld->num_prox_grenades > 15))
+	{
+		ProximityGrenadeExplode();
+		return;
+	}
+
+	pev->owner = NULL;
+	pev->takedamage = DAMAGE_YES;
+
+	TraceResult tr;
+	CBaseEntity *pEnt = NULL;
+	BOOL bBlowup = FALSE;
+
+	while(( pEnt = UTIL_FindEntityInSphere( pEnt, pev->origin, 140 )) != NULL )
+	{
+		if (( pEnt != this ) && (pEnt->pev->health > 0.0f) && (pEnt->pev->flags & (FL_CLIENT|FL_MONSTER)) && !FStrEq( STRING( pEnt->pev->classname ), STRING( pev->classname ) ))
+		{
+			// velocity based detector for player
+			if( pEnt->pev->flags & FL_CLIENT && pEnt->pev->velocity == g_vecZero );
+			else bBlowup = TRUE;
+                    }
+
+		if( FStrEq( STRING( pEnt->pev->classname ), STRING( pev->classname ) ) && pEnt->pev->movetype != MOVETYPE_COMPOUND)
+			bBlowup = TRUE;
+
+		UTIL_TraceLine(pev->origin, pEnt->pev->origin, ignore_monsters, ENT(pev), &tr);
+		if (tr.flFraction != 1.0f)
+			bBlowup = FALSE;	// cancelling explosion
+
+		if (bBlowup)
+		{
+			EMIT_SOUND (ENT(pev), CHAN_WEAPON, "hipweap/proxwarn.wav", 1, ATTN_NORM);
+			ProximityGrenadeExplode();
+			pev->nextthink = gpGlobals->time + 0.3f;
+			return;
+		}
+	}
+
+	pev->nextthink = gpGlobals->time + 0.25f;
+}
+
+void CRocket::ProximityGrenadeExplode( void )
+{
+	gpWorld->num_prox_grenades--;
+	m_iDeathType = MAKE_STRING( "exploding" );
+	pev->nextthink = gpGlobals->time + 0.1f;
+	pev->owner = pev->enemy;
+	SetThink( GrenadeExplode );
+}
+
+void CRocket::ProximityTouch( CBaseEntity *pOther )
+{
+	if( FStrEq( STRING( pOther->pev->classname ), STRING( pev->classname ) ))
+		return;
+
+	if (pev->movetype == MOVETYPE_COMPOUND)
+		return;
+
+	if( pOther->pev->takedamage == DAMAGE_AIM)
+	{
+		ProximityGrenadeExplode();
+		return;
+	}
+
+	if( pOther->pev->solid != SOLID_BSP )
+		return;
+
+	// nice point to attach for
+	UTIL_SetSize(pev, Vector( -8, -8, -8), Vector(8, 8, 8));
+	EMIT_SOUND (ENT(pev), CHAN_WEAPON, "weapons/bounce.wav", 1, ATTN_NORM); // bounce sound
+
+	pev->movetype = MOVETYPE_COMPOUND;	// set movewith type
+	pev->aiment = pOther->edict();	// set parent
+	SetTouch( NULL );
+}
+
+#endif /* HIPNOTIC */
 LINK_ENTITY_TO_CLASS( zombie_missile, CZombieMissile );
 
 CZombieMissile *CZombieMissile :: CreateMissile( Vector vecOrigin, Vector vecOffset, Vector vecAngles, CBaseEntity *pOwner )
@@ -740,6 +983,168 @@ void CShalMissile :: ShalTouch( CBaseEntity *pOther )
 	UTIL_Remove( this );
 }
 
+#ifdef HIPNOTIC
+LINK_ENTITY_TO_CLASS( mjolnir_beam, CMjolnirLightning );
+
+CMjolnirLightning *CMjolnirLightning :: CreateLightning( CBaseEntity *pPrev, CBaseEntity *pOwner, const Vector &vecAngles, float flDist )
+{
+	CMjolnirLightning *pBolt = GetClassPtr((CMjolnirLightning *)NULL );
+
+	UTIL_SetOrigin( pBolt->pev, pOwner->pev->origin );
+	pBolt->pev->classname = MAKE_STRING( "mjolnir_beam" );
+	pBolt->pev->owner = pOwner->edict();
+	pBolt->pev->v_angle.y = vecAngles.y;
+	pBolt->pev->enemy = pPrev->edict();	// lastvictim!!!
+	pBolt->pev->frags = flDist;
+	pBolt->Spawn();
+
+	// done
+	return pBolt;
+}
+
+void CMjolnirLightning :: Spawn( void )
+{
+	m_flDelay = gpGlobals->time + 0.8f;
+	pev->nextthink = gpGlobals->time;	// fire immediately
+}
+
+BOOL CMjolnirLightning :: TargetVisible( CBaseEntity *pTarg )
+{
+	TraceResult tr;
+
+	Vector spot1 = EyePosition();
+	Vector spot2 = pTarg->EyePosition();
+
+	// see through other monsters
+	UTIL_TraceLine(spot1, spot2, ignore_monsters, ignore_glass, ENT(pev), &tr);
+	
+	if (tr.fInOpen && tr.fInWater)
+		return FALSE;		// sight line crossed contents
+
+	if (tr.flFraction == 1.0)
+		return TRUE;
+	return FALSE;
+}
+
+void CMjolnirLightning :: Think( void )
+{
+	if (gpGlobals->time > m_flDelay)
+	{
+		if (m_hEnemy != NULL)
+			m_hEnemy->m_bStruckByMjolnir = FALSE;
+		UTIL_Remove(this);
+		return;
+	}
+
+	TraceResult trace;
+	int oldstate = pev->button;
+
+	if (pev->button==0)
+	{
+		// look in our immediate vicinity
+		m_hEnemy = NULL;
+		CBaseEntity *pEnt = NULL, *pBest = NULL;
+		float flStartDist = pev->frags;
+
+		while(( pEnt = UTIL_FindEntityInSphere( pEnt, pev->owner->v.origin, pev->frags )) != NULL )
+		{
+			if( !FBitSet( pEnt->pev->flags, FL_NOTARGET ) && FBitSet( pEnt->pev->flags, FL_CLIENT|FL_MONSTER ))
+			{
+				if (TargetVisible( pEnt ) && pEnt->edict() != pev->owner->v.owner && (pEnt->pev->health > 0))
+				{
+					float flDist = (pEnt->pev->origin - pev->enemy->v.origin).Length();
+					if( flDist < flStartDist && !pEnt->m_bStruckByMjolnir )
+					{
+						flStartDist = flDist;
+						pBest = pEnt;
+					}
+				}
+			}
+		}
+
+		if (pBest != NULL)
+		{
+			pev->button = 1;
+			m_hEnemy = pBest;
+			m_hEnemy->m_bStruckByMjolnir = TRUE;
+		}
+		else
+		{
+			UTIL_MakeVectors(pev->v_angle);
+			Vector org = pev->owner->v.origin;
+			Vector end = org + gpGlobals->v_forward * 200;
+			end += gpGlobals->v_right * RANDOM_FLOAT(-200.0f, 200.0f);
+
+			UTIL_TraceLine( org, end, ignore_monsters, edict(), &trace );
+
+			MESSAGE_BEGIN( MSG_BROADCAST, gmsgTempEntity );
+				WRITE_BYTE( TE_LIGHTNING2 );
+				WRITE_ENTITY( entindex() );
+				WRITE_COORD( org.x );
+				WRITE_COORD( org.y );
+				WRITE_COORD( org.z );
+				WRITE_COORD( trace.vecEndPos.x );
+				WRITE_COORD( trace.vecEndPos.y );
+				WRITE_COORD( trace.vecEndPos.z );
+			MESSAGE_END();
+
+			pev->nextthink = gpGlobals->time + 0.1f;
+			return;
+		}
+	}
+
+	if (m_hEnemy == NULL)
+	{
+		pev->nextthink = gpGlobals->time + 0.1f;
+		pev->button = 0;	// reset state
+		return;
+	}
+
+	Vector org = pev->enemy->v.origin;
+	Vector dst = m_hEnemy->pev->absmin + 0.25f * (m_hEnemy->pev->absmax - m_hEnemy->pev->absmin);
+	dst += (RANDOM_FLOAT( 0.0f, 0.5f ) * (m_hEnemy->pev->absmax - m_hEnemy->pev->absmin));
+
+	UTIL_TraceLine( org, dst, ignore_monsters, pev->owner->v.owner, &trace );
+
+	if (trace.flFraction != 1.0f || m_hEnemy->pev->health <= 0.0f )
+	{
+		m_hEnemy->m_bStruckByMjolnir = FALSE;
+		pev->nextthink = gpGlobals->time + 0.1f;
+		pev->button = 0;	// reset state
+		return;
+	}
+
+	MESSAGE_BEGIN( MSG_BROADCAST, gmsgTempEntity );
+		WRITE_BYTE( TE_LIGHTNING2 );
+		WRITE_ENTITY( entindex() );
+		WRITE_COORD( org.x );
+		WRITE_COORD( org.y );
+		WRITE_COORD( org.z );
+		WRITE_COORD( trace.vecEndPos.x );
+		WRITE_COORD( trace.vecEndPos.y );
+		WRITE_COORD( trace.vecEndPos.z );
+	MESSAGE_END();
+
+	Vector vec = (m_hEnemy->pev->origin - pev->owner->v.origin).Normalize();
+	float flDot = DotProduct( vec, pev->owner->v.movedir );
+	float flDmg;
+
+	CBaseEntity *pAttacker = CBaseEntity::Instance(pev->owner->v.owner);
+
+	if (oldstate==0)
+		flDmg = 80.0f;
+	else
+		flDmg = 30.0f;
+
+	if (flDot > 0.3f)
+		CBasePlayer::LightningDamage (org, trace.vecEndPos, pAttacker, flDmg, vec );
+	else
+		CBasePlayer::LightningDamage (org, trace.vecEndPos, pAttacker, flDmg * 0.5f, vec );
+
+	pev->nextthink = gpGlobals->time + 0.2f;
+}
+
+#endif /* HIPNOTIC */
 // Plays quad sound if needed
 void CBasePlayer::SuperDamageSound( void )
 {
@@ -761,6 +1166,10 @@ int CBasePlayer::W_BestWeapon()
 {
 	if (pev->waterlevel <= 1 && ammo_cells >= 1 && (m_iItems & IT_LIGHTNING) )
 		return IT_LIGHTNING;
+#ifdef HIPNOTIC
+	else if(ammo_cells >= 1 && (m_iItems & IT_LASER_CANNON) )
+		return IT_LASER_CANNON;
+#endif /* HIPNOTIC */
 	else if(ammo_nails >= 2 && (m_iItems & IT_SUPER_NAILGUN) )
 		return IT_SUPER_NAILGUN;
 	else if(ammo_shells >= 2 && (m_iItems & IT_SUPER_SHOTGUN) )
@@ -769,7 +1178,12 @@ int CBasePlayer::W_BestWeapon()
 		return IT_NAILGUN;
 	else if(ammo_shells >= 1 && (m_iItems & IT_SHOTGUN)  )
 		return IT_SHOTGUN;
+#ifndef HIPNOTIC
 		
+#else /* HIPNOTIC */
+	else if( m_iItems & IT_MJOLNIR )
+		return IT_MJOLNIR;
+#endif /* HIPNOTIC */
 	return IT_AXE;
 }
 
@@ -777,7 +1191,12 @@ int CBasePlayer::W_BestWeapon()
 void CBasePlayer::W_SetCurrentAmmo( int sendanim /* = 1 */ )
 {
 	m_iItems &= ~(IT_SHELLS | IT_NAILS | IT_ROCKETS | IT_CELLS);
+#ifndef HIPNOTIC
 	int	iszViewModel = 0;
+#else /* HIPNOTIC */
+
+	int iszViewModel = 0;
+#endif /* HIPNOTIC */
 	char *viewmodel = "";
 	int iszWeaponModel = 0;
 	char *szAnimExt;
@@ -854,6 +1273,35 @@ void CBasePlayer::W_SetCurrentAmmo( int sendanim /* = 1 */ )
 		m_iItems |= IT_CELLS;
 		szAnimExt = "gauss";
 	}
+#ifdef HIPNOTIC
+	else if (m_iWeapon == IT_LASER_CANNON)
+	{
+		m_pCurrentAmmo = &ammo_cells;
+		viewmodel = "models/v_laser.mdl";
+		iszViewModel = MAKE_STRING(viewmodel);
+		iszWeaponModel = MAKE_STRING("models/p_laser.mdl");
+		m_iItems |= IT_CELLS;
+		szAnimExt = "gauss";
+	}
+	else if (m_iWeapon == IT_MJOLNIR)
+	{
+		m_pCurrentAmmo = &ammo_cells;
+		viewmodel = "models/v_hammer.mdl";
+		iszViewModel = MAKE_STRING(viewmodel);
+		iszWeaponModel = MAKE_STRING("models/p_hammer.mdl");
+		m_iItems |= IT_CELLS;
+		szAnimExt = "crowbar";
+	}
+	else if (m_iWeapon == IT_PROXIMITY_GUN)
+	{
+		m_pCurrentAmmo = &ammo_rockets;
+		viewmodel = "models/v_prox.mdl";
+		iszViewModel = MAKE_STRING(viewmodel);
+		iszWeaponModel = MAKE_STRING("models/p_prox.mdl");
+		m_iItems |= IT_ROCKETS;
+		szAnimExt = "gauss";
+	}
+#endif /* HIPNOTIC */
 	else
 	{
 		m_pCurrentAmmo = NULL;
@@ -885,6 +1333,11 @@ BOOL CBasePlayer::W_CheckNoAmmo( void )
 
 	if ( m_iWeapon == IT_AXE )
 		return TRUE;
+#ifdef HIPNOTIC
+
+	if ( m_iWeapon == IT_MJOLNIR )
+		return TRUE;
+#endif /* HIPNOTIC */
 	
 	m_iWeapon = W_BestWeapon();
 	W_SetCurrentAmmo();
@@ -927,7 +1380,14 @@ void CBasePlayer::W_ChangeWeapon( int iWeaponNumber )
 	}
 	else if (iWeaponNumber == 6)
 	{
+#ifndef HIPNOTIC
 		iWeapon = IT_GRENADE_LAUNCHER;
+#else /* HIPNOTIC */
+		if (m_iWeapon == IT_GRENADE_LAUNCHER)
+			iWeapon = IT_PROXIMITY_GUN;
+		else
+			iWeapon = IT_GRENADE_LAUNCHER;
+#endif /* HIPNOTIC */
 		if (ammo_rockets < 1)
 			bHaveAmmo = FALSE;
 	}
@@ -944,12 +1404,45 @@ void CBasePlayer::W_ChangeWeapon( int iWeaponNumber )
 		if (ammo_cells < 1)
 			bHaveAmmo = FALSE;
 	}
+#ifdef HIPNOTIC
+	else if (iWeaponNumber == 225)
+	{
+		iWeapon = IT_LASER_CANNON;
+		if (ammo_cells < 1)
+			bHaveAmmo = FALSE;
+	}
+	else if (iWeaponNumber == 226)
+	{
+		iWeapon = IT_MJOLNIR;
+	}
+#endif /* HIPNOTIC */
 
 	// Have the weapon?
 	if ( !(m_iItems & iWeapon) )
 	{       
+#ifndef HIPNOTIC
 		CLIENT_PRINTF( edict(), print_console, "no weapon.\n" );
 		return;
+#else /* HIPNOTIC */
+		if (iWeapon == IT_GRENADE_LAUNCHER)
+		{
+			iWeapon = IT_PROXIMITY_GUN;
+
+			if ( !(m_iItems & iWeapon) )
+			{
+				CLIENT_PRINTF( edict(), print_console, "no weapon.\n" );
+				return;
+			}
+
+			if (ammo_rockets < 1)
+				bHaveAmmo = FALSE;
+		}
+		else
+		{
+			CLIENT_PRINTF( edict(), print_console, "no weapon.\n" );
+			return;
+		}
+#endif /* HIPNOTIC */
 	}
 	
 	// Have ammo for it?
@@ -971,11 +1464,15 @@ void CBasePlayer::W_CycleWeaponCommand( void )
 	{
 		BOOL bHaveAmmo = TRUE;
 
+#ifndef HIPNOTIC
 		if (m_iWeapon == IT_LIGHTNING)
 		{
 			m_iWeapon = IT_EXTRA_WEAPON;
 		}
 		else if (m_iWeapon == IT_EXTRA_WEAPON)
+#else /* HIPNOTIC */
+		if (m_iWeapon == IT_MJOLNIR)
+#endif /* HIPNOTIC */
 		{
 			m_iWeapon = IT_AXE;
 		}
@@ -1011,6 +1508,20 @@ void CBasePlayer::W_CycleWeaponCommand( void )
 		}
 		else if (m_iWeapon == IT_GRENADE_LAUNCHER)
 		{
+#ifdef HIPNOTIC
+			m_iWeapon = IT_PROXIMITY_GUN;
+			if (ammo_rockets < 1)
+				bHaveAmmo = FALSE;
+		}
+		else if (m_iWeapon == IT_GRENADE_LAUNCHER)
+		{
+			m_iWeapon = IT_ROCKET_LAUNCHER;
+			if (ammo_rockets < 1)
+				bHaveAmmo = FALSE;
+		}
+		else if (m_iWeapon == IT_PROXIMITY_GUN)
+		{
+#endif /* HIPNOTIC */
 			m_iWeapon = IT_ROCKET_LAUNCHER;
 			if (ammo_rockets < 1)
 				bHaveAmmo = FALSE;
@@ -1021,6 +1532,18 @@ void CBasePlayer::W_CycleWeaponCommand( void )
 			if (ammo_cells < 1)
 				bHaveAmmo = FALSE;
 		}
+#ifdef HIPNOTIC
+		else if (m_iWeapon == IT_LIGHTNING)
+		{
+			m_iWeapon = IT_LASER_CANNON;
+			if (ammo_cells < 1)
+				bHaveAmmo = FALSE;
+		}
+		else if (m_iWeapon == IT_LASER_CANNON)
+		{
+			m_iWeapon = IT_MJOLNIR;
+		}
+#endif /* HIPNOTIC */
 	
 		if ( (m_iItems & m_iWeapon) && bHaveAmmo )
 		{
@@ -1038,9 +1561,23 @@ void CBasePlayer::W_CycleWeaponReverseCommand( void )
 	{
 		BOOL bHaveAmmo = TRUE;
 
+#ifndef HIPNOTIC
 		if (m_iWeapon == IT_EXTRA_WEAPON)
+#else /* HIPNOTIC */
+		if (m_iWeapon == IT_MJOLNIR)
+		{
+			m_iWeapon = IT_LASER_CANNON;
+			if (ammo_cells < 1)
+				bHaveAmmo = FALSE;
+		}
+		else if (m_iWeapon == IT_LASER_CANNON)
+#endif /* HIPNOTIC */
 		{
 			m_iWeapon = IT_LIGHTNING;
+#ifdef HIPNOTIC
+			if (ammo_cells < 1)
+				bHaveAmmo = FALSE;
+#endif /* HIPNOTIC */
 		}
 		else if (m_iWeapon == IT_LIGHTNING)
 		{
@@ -1050,6 +1587,14 @@ void CBasePlayer::W_CycleWeaponReverseCommand( void )
 		}
 		else if (m_iWeapon == IT_ROCKET_LAUNCHER)
 		{
+#ifdef HIPNOTIC
+			m_iWeapon = IT_PROXIMITY_GUN;
+			if (ammo_rockets < 1)
+				bHaveAmmo = FALSE;
+		}
+		else if (m_iWeapon == IT_PROXIMITY_GUN)
+		{
+#endif /* HIPNOTIC */
 			m_iWeapon = IT_GRENADE_LAUNCHER;
 			if (ammo_rockets < 1)
 				bHaveAmmo = FALSE;
@@ -1084,6 +1629,7 @@ void CBasePlayer::W_CycleWeaponReverseCommand( void )
 		}
 		else if (m_iWeapon == IT_AXE)
 		{
+#ifndef HIPNOTIC
 			m_iWeapon = IT_EXTRA_WEAPON;
 		}
 		else if (m_iWeapon == IT_EXTRA_WEAPON)
@@ -1091,9 +1637,14 @@ void CBasePlayer::W_CycleWeaponReverseCommand( void )
 			m_iWeapon = IT_LIGHTNING;
 			if (ammo_cells < 1)
 				bHaveAmmo = FALSE;
+#else /* HIPNOTIC */
+			m_iWeapon = IT_MJOLNIR;
+#endif /* HIPNOTIC */
 		}
 
+#ifndef HIPNOTIC
 	
+#endif /* ! HIPNOTIC */
 		if ( (m_iItems & m_iWeapon) && bHaveAmmo )
 		{
 			W_SetCurrentAmmo();
@@ -1274,7 +1825,13 @@ void CBasePlayer::LightningDamage( Vector p1, Vector p2, CBaseEntity *pAttacker,
 	// Hit first target?
 	UTIL_TraceLine( p1, p2, dont_ignore_monsters, ENT(pAttacker->pev), &trace );
 	CBaseEntity *pEntity = CBaseEntity::Instance(trace.pHit);
+#ifndef HIPNOTIC
 	if (pEntity && pEntity->pev->takedamage)
+#else /* HIPNOTIC */
+	BOOL fCanDamage = (pEntity->IsPlayer() ? (((CBasePlayer *)pEntity)->m_flWetSuitFinished == 0.0f) : TRUE );
+
+	if (pEntity && pEntity->pev->takedamage && fCanDamage)
+#endif /* HIPNOTIC */
 	{
 		LightningHit(pEntity, pAttacker, trace.vecEndPos, flDamage, &trace, vecDir );
 	}
@@ -1285,7 +1842,13 @@ void CBasePlayer::LightningDamage( Vector p1, Vector p2, CBaseEntity *pAttacker,
 	// Hit second target?
 	UTIL_TraceLine( p1 + vecThru, p2 + vecThru, dont_ignore_monsters, ENT(pAttacker->pev), &trace );
 	pEntity = CBaseEntity::Instance(trace.pHit);
+#ifndef HIPNOTIC
 	if (pEntity && pEntity != pEntity1 && pEntity->pev->takedamage)
+#else /* HIPNOTIC */
+	fCanDamage = (pEntity->IsPlayer() ? (((CBasePlayer *)pEntity)->m_flWetSuitFinished == 0.0f) : TRUE );
+
+	if (pEntity && pEntity != pEntity1 && pEntity->pev->takedamage && fCanDamage)
+#endif /* HIPNOTIC */
 	{
 		LightningHit(pEntity, pAttacker, trace.vecEndPos, flDamage, &trace, vecDir );
 	}
@@ -1296,7 +1859,13 @@ void CBasePlayer::LightningDamage( Vector p1, Vector p2, CBaseEntity *pAttacker,
 	// Hit third target?
 	UTIL_TraceLine( p1 - vecThru, p2 - vecThru, dont_ignore_monsters, ENT(pAttacker->pev), &trace );
 	pEntity = CBaseEntity::Instance(trace.pHit);
+#ifndef HIPNOTIC
 	if (pEntity && pEntity != pEntity1 && pEntity != pEntity2 && pEntity->pev->takedamage)
+#else /* HIPNOTIC */
+	fCanDamage = (pEntity->IsPlayer() ? (((CBasePlayer *)pEntity)->m_flWetSuitFinished == 0.0f) : TRUE );
+
+	if (pEntity && pEntity != pEntity1 && pEntity != pEntity2 && pEntity->pev->takedamage && fCanDamage)
+#endif /* HIPNOTIC */
 	{
 		LightningHit(pEntity, pAttacker, trace.vecEndPos, flDamage, &trace, vecDir );
 	}
@@ -1425,10 +1994,176 @@ void CBasePlayer::W_FireGrenade( void )
 		vecVelocity.z = 200;
 	}
 
+#ifdef HIPNOTIC
+	pev->punchangle.x = -2;
+
+#endif /* HIPNOTIC */
 	// Create the grenade
 	CRocket *pRocket = CRocket::CreateGrenade( pev->origin, vecVelocity, this );
 }
 
+#ifdef HIPNOTIC
+// Proximity grenade launcher
+void CBasePlayer::W_FireProximityGrenade( void )
+{
+	if (gpGlobals->deathmatch != 4 )
+		*m_pCurrentAmmo -= 1;
+
+	EMIT_SOUND( edict(), CHAN_WEAPON, "hipweap/proxbomb.wav", 1, ATTN_NORM );
+	gpWorld->num_prox_grenades++;
+
+	// Get initial velocity
+	UTIL_MakeVectors( pev->v_angle );
+	Vector vecVelocity;
+	if ( pev->v_angle.x )
+	{
+		vecVelocity = gpGlobals->v_forward * 600 + gpGlobals->v_up * 200 + RANDOM_FLOAT(-1,1) * gpGlobals->v_right * 10 + RANDOM_FLOAT(-1,1) * gpGlobals->v_up * 10;
+	}
+	else
+	{
+		GET_AIM_VECTOR( edict(), 1000.0f, vecVelocity );
+		vecVelocity = vecVelocity * 600;
+		vecVelocity.z = 200;
+	}
+
+	pev->punchangle.x = -2;
+
+	// Create the grenade
+	CRocket *pRocket = CRocket::CreateProxGrenade( pev->origin, vecVelocity, this );
+}
+
+// Laser cannon
+void CBasePlayer::W_FireLaser( void )
+{
+	UTIL_MakeVectors (pev->v_angle);
+
+	Vector out = gpGlobals->v_forward;
+	out.z = 0.0f;
+
+	out = out.Normalize();
+	Vector org = pev->origin + (6.0f * gpGlobals->v_up) + (12.0f * out);
+	Vector dir = UTIL_GetAimVector( edict(), 1000.0f );
+	float aofs = 6 * 0.707f;
+
+	if (gpGlobals->deathmatch != 4 )
+		*m_pCurrentAmmo -= 1;
+
+	org = org + (aofs * gpGlobals->v_right);
+	org = org - (aofs * gpGlobals->v_up);
+	CNail::CreateHipLaser( org, dir, this );
+	org = org - (2 * aofs * gpGlobals->v_right);
+	CNail::CreateHipLaser( org, dir, this );
+	pev->punchangle.x = -1.0f;
+}
+
+void CBasePlayer::W_SpawnMjolnirBase( TraceResult *ptr )
+{
+	CBaseEntity *pSource = GetClassPtr( (CPointEntity *)NULL );
+	pSource->pev->classname = MAKE_STRING( "info_notnull" );
+	UTIL_SetOrigin( pSource->pev, ptr->vecEndPos );
+
+	pSource->pev->owner = edict();
+	pSource->m_bStruckByMjolnir = TRUE;
+	pSource->SetThink( &CBaseEntity :: SUB_Remove );
+	pSource->pev->nextthink = gpGlobals->time + 1.0f;
+
+	EMIT_SOUND (ENT(pSource->pev), CHAN_AUTO, "hipweap/mjolslap.wav", 1, ATTN_NORM);
+	EMIT_SOUND (ENT(pSource->pev), CHAN_WEAPON, "hipweap/mjolhit.wav", 1, ATTN_NORM);
+	UTIL_MakeVectors(pev->v_angle);
+	pSource->pev->movedir = gpGlobals->v_forward;
+
+	CMjolnirLightning :: CreateLightning( pSource, pSource, pev->angles, 350.0f );
+	CMjolnirLightning :: CreateLightning( pSource, pSource, pev->angles, 350.0f );
+	CMjolnirLightning :: CreateLightning( pSource, pSource, pev->angles, 350.0f );
+	CMjolnirLightning :: CreateLightning( pSource, pSource, pev->angles, 350.0f );
+}
+
+// Mjolnir
+void CBasePlayer::W_FireHammer( BOOL hasAmmo )
+{
+	TraceResult tr;
+
+	m_flNextAttack = UTIL_WeaponTimeBase() + 0.4f;
+	Vector source = pev->origin + Vector( 0, 0, 16 );
+
+	UTIL_MakeVectors (pev->v_angle);
+
+	UTIL_TraceLine( source, source + gpGlobals->v_forward * 36.0f, dont_ignore_monsters, edict(), &tr );
+
+	if( tr.flFraction == 1.0f && ( ammo_cells >= 15 ))
+	{
+		source += gpGlobals->v_forward * 36.0f;
+		UTIL_TraceLine( source, source - gpGlobals->v_up * 50.0f, dont_ignore_monsters, edict(), &tr );
+
+		if(( tr.flFraction > 0.3f && tr.flFraction < 1.0f ))
+		{
+			// explode if under water
+			if (pev->waterlevel > 1)
+			{
+				if ( (gpGlobals->deathmatch > 3) && (RANDOM_FLOAT(0, 1) <= 0.5) )
+				{
+					TakeDamage( pev, pev, 4000, DMG_GENERIC );
+				}
+				else
+				{
+					float flCellsBurnt = *m_pCurrentAmmo;
+					*m_pCurrentAmmo = 0;
+					W_SetCurrentAmmo();
+					g_fDischarged = TRUE;
+					Q_RadiusDamage( this, this, 35 * flCellsBurnt, NULL );
+					g_fDischarged = FALSE;
+				}
+				return;
+			}
+
+			m_flNextAttack = UTIL_WeaponTimeBase() + 1.5f;
+			*m_pCurrentAmmo -= 15;
+			W_SpawnMjolnirBase( &tr );
+			SendWeaponAnim( 2 );
+			return;
+		}
+	}
+
+	Vector org = tr.vecEndPos - gpGlobals->v_forward * 4;
+	CBaseEntity *pEntity = CBaseEntity::Instance(tr.pHit);
+
+	if (pEntity && pEntity->pev->takedamage)
+	{
+		float flDamage = 50.0f;
+		if (FClassnameIs( pEntity->pev, "monster_zombie"))
+			flDamage = 70.0f;
+		pEntity->m_bAxHitMe = TRUE;
+
+		pEntity->TakeDamage( pev, pev, flDamage, DMG_GENERIC );
+
+		if ( g_pGameRules->PlayerRelationship( this, pEntity ) != GR_TEAMMATE )
+			 SpawnBlood( org, pEntity->BloodColor(), flDamage );
+	}
+	else
+	{
+		// hit wall
+		if (tr.flFraction != 1.0f)
+		{
+			EMIT_SOUND (ENT(pev), CHAN_WEAPON, "hipweap/mjoltink.wav", 1, ATTN_NORM);
+
+			MESSAGE_BEGIN( MSG_BROADCAST, gmsgTempEntity );
+				WRITE_BYTE( TE_GUNSHOT );
+				WRITE_COORD( org.x );
+				WRITE_COORD( org.y );
+				WRITE_COORD( org.z );
+			MESSAGE_END();
+		}
+		else
+		{
+			EMIT_SOUND (ENT(pev), CHAN_WEAPON, "knight/sword1.wav", 1, ATTN_NORM);
+			SendWeaponAnim( 3 );
+		}
+	}
+
+	m_flNextAttack = UTIL_WeaponTimeBase() + 0.4f;
+}
+
+#endif /* HIPNOTIC */
 // Lightning Gun
 void CBasePlayer::W_FireLightning( void )
 {
@@ -1460,7 +2195,13 @@ void CBasePlayer::W_FireLightning( void )
 			float flCellsBurnt = *m_pCurrentAmmo;
 			*m_pCurrentAmmo = 0;
 			W_SetCurrentAmmo();
+#ifdef HIPNOTIC
+			g_fDischarged = TRUE;
+#endif /* HIPNOTIC */
 			Q_RadiusDamage( this, this, 35 * flCellsBurnt, NULL );
+#ifdef HIPNOTIC
+			g_fDischarged = FALSE;
+#endif /* HIPNOTIC */
 			return;
 		}
 	}
@@ -1611,6 +2352,14 @@ void CBasePlayer::W_Attack( void )
 
 		W_FireGrenade();
 	}
+#ifdef HIPNOTIC
+	else if (m_iWeapon == IT_PROXIMITY_GUN)
+	{
+		m_flNextAttack = UTIL_WeaponTimeBase() + 0.6;
+
+		W_FireProximityGrenade();
+	}
+#endif /* HIPNOTIC */
 	else if (m_iWeapon == IT_ROCKET_LAUNCHER)
 	{
 		m_flNextAttack = UTIL_WeaponTimeBase() + 0.8;
@@ -1626,6 +2375,18 @@ void CBasePlayer::W_Attack( void )
 			EMIT_SOUND(ENT(pev), CHAN_AUTO, "weapons/lstart.wav", 1, ATTN_NORM);
 
 		W_FireLightning();
+#ifdef HIPNOTIC
+	}
+	else if (m_iWeapon == IT_LASER_CANNON)
+	{
+		m_flNextAttack = UTIL_WeaponTimeBase() + 0.1;
+		W_FireLaser();
+	}
+	else if (m_iWeapon == IT_MJOLNIR)
+	{
+		m_flNextAttack = UTIL_WeaponTimeBase() + 0.8;
+		W_FireHammer(( ammo_cells >= 30 ) ? TRUE : FALSE );
+#endif /* HIPNOTIC */
 	}
 
 	// Make player attack

@@ -112,6 +112,19 @@ void CFish :: FishMelee( void )
 
 void CFish :: MonsterKilled( entvars_t *pevAttacker, int iGib )
 {
+#ifdef HIPNOTIC
+	if( ShouldGibMonster( iGib ))
+	{
+		// HIPNOTIC: fish gibbed without head
+		EMIT_SOUND( edict(), CHAN_VOICE, "player/udeath.wav", 1.0, ATTN_NORM );
+		CGib::ThrowGib ("models/gib1.mdl", pev);
+		CGib::ThrowGib ("models/gib1.mdl", pev);
+		CGib::ThrowGib ("models/gib1.mdl", pev);
+		UTIL_Remove( this );
+		return;
+	}
+
+#endif /* HIPNOTIC */
 	EMIT_SOUND( edict(), CHAN_VOICE, "fish/death.wav", 1.0, ATTN_NORM );
 
 	pev->flags &= ~(FL_SWIM);

@@ -40,7 +40,11 @@ typedef struct
 
 extern MULTIDAMAGE gMultiDamage;
 
+#ifndef HIPNOTIC
 class CRocket : public CBaseEntity
+#else /* HIPNOTIC */
+class CRocket : public CBaseDelay
+#endif /* HIPNOTIC */
 {
 public:
 	void Spawn( void );
@@ -52,8 +56,16 @@ public:
 
 	// Grenade funcs
 	static CRocket *CreateGrenade( Vector vecOrigin, Vector vecAngles, CBaseEntity *pOwner );
+#ifdef HIPNOTIC
+	static CRocket *CreateProxGrenade( Vector vecOrigin, Vector vecAngles, CBaseEntity *pOwner );
+#endif /* HIPNOTIC */
 	void EXPORT GrenadeTouch( CBaseEntity *pOther );
 	void EXPORT GrenadeExplode( void );
+#ifdef HIPNOTIC
+	void EXPORT ProximityThink( void );
+	void EXPORT ProximityTouch( CBaseEntity *pOther );
+	void ProximityGrenadeExplode( void );
+#endif /* HIPNOTIC */
 
 	int	m_iTrail;
 };
@@ -65,10 +77,21 @@ public:
 	static  CNail *CreateNail( Vector vecOrigin, Vector vecDir, CBaseEntity *pOwner );
 	static  CNail *CreateSuperNail( Vector vecOrigin, Vector vecDir, CBaseEntity *pOwner );
 	static  CNail *CreateKnightSpike( Vector vecOrigin, Vector vecDir, CBaseEntity *pOwner );
+#ifdef HIPNOTIC
+	static  CNail *CreateHipLaser( Vector vecOrigin, Vector vecDir, CBaseEntity *pOwner );
+#endif /* HIPNOTIC */
 	void EXPORT NailTouch( CBaseEntity *pOther );
 	void EXPORT ExplodeTouch( CBaseEntity *pOther );
+#ifdef HIPNOTIC
+	void EXPORT LaserTouch( CBaseEntity *pOther );
+	void EXPORT LaserThink( void );
+#endif /* HIPNOTIC */
 };
 
+#ifdef HIPNOTIC
+#define SF_TRAP_SILENT	16	// special flag for trap_shooter
+
+#endif /* HIPNOTIC */
 class CLaser : public CBaseEntity
 {
 public:
@@ -95,6 +118,17 @@ class CShalMissile : public CBaseEntity
 	void EXPORT ShalHome( void );
 public:
 	static CShalMissile *CreateMissile( Vector vecOrigin, Vector vecVelocity );
+#ifdef HIPNOTIC
+};
+
+class CMjolnirLightning : public CBaseDelay
+{
+	void Spawn( void );
+	void Think( void );
+	BOOL TargetVisible( CBaseEntity *pTarg );
+public:
+	static CMjolnirLightning *CreateLightning( CBaseEntity *pPrev, CBaseEntity *pOwner, const Vector &vecAngles, float flDist );
+#endif /* HIPNOTIC */
 };
 
 #endif // WEAPONS_H

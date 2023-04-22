@@ -94,6 +94,18 @@ public:
 	float		m_flRadSuitTime;
 	float		m_flRadSuitFinished;
 
+#ifdef HIPNOTIC
+	float		m_flWetSuitTime;
+	float		m_flWetSuitFinished;
+
+	float		m_flEmpathyShieldTime;
+	float		m_flEmpathyShieldFinished;
+	float		m_flEmpathyShieldSound;
+
+	BOOL		m_fEarthQuake;
+	float		m_flEarthQuakeTime;
+
+#endif /* HIPNOTIC */
 	char		m_szTeamName[TEAM_NAME_LENGTH];
 
 	virtual void Spawn( void );
@@ -173,6 +185,9 @@ public:
 	static void FireBullets( entvars_t *pev, int iShots, Vector vecDir, Vector vecSpread );
 	static void LightningDamage( Vector p1, Vector p2, CBaseEntity *pAttacker, float flDamage, Vector vecDir );
 
+#ifdef HIPNOTIC
+	int	TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType );
+#endif /* HIPNOTIC */
 	void	SuperDamageSound( void );
 	void	SendWeaponAnim( int iAnim );
 
@@ -184,12 +199,22 @@ public:
 	void	W_FireRocket( void );
 	void	W_FireLightning( void );
 	void	W_FireGrenade( void );
+#ifdef HIPNOTIC
+	void	W_FireProximityGrenade( void );
+#endif /* HIPNOTIC */
 	void	W_FireSuperSpikes( void );
 	void	W_FireSpikes( void );
+#ifdef HIPNOTIC
+	void	W_FireLaser( void );
+	void	W_FireHammer( BOOL hasAmmo );
+	void	W_SpawnMjolnirBase( TraceResult *ptr );
+#endif /* HIPNOTIC */
 
 	// Ammunition
 	void	CheckAmmo( void );
+#ifndef HIPNOTIC
 	int	*m_pCurrentAmmo;	// Always points to one of the four ammo counts below
+#endif /* ! HIPNOTIC */
 
 	// Backpacks
 	void	DropBackpack( void );
@@ -209,8 +234,10 @@ public:
 
 	// Weapon Data
 	float	m_flAxeFire;
+#ifndef HIPNOTIC
 	float	m_flLightningSoundTime;
 	float	m_flLightningTime;
+#endif /* ! HIPNOTIC */
 	int	m_iNailOffset;
 	float	m_flNextChatTime;
 	float	m_flNextAttack;	
@@ -222,6 +249,9 @@ extern int	gmsgHideHUD;
 extern int	gmsgTempEntity;	// quake missing sfx
 extern int	gmsgFoundSecret;
 extern int	gmsgKilledMonster;
+#ifdef HIPNOTIC
+extern int	gmsgStats;
+#endif /* HIPNOTIC */
 
 extern BOOL gInitHUD;
 

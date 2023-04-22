@@ -46,6 +46,14 @@ int CHudSBar::Init(void)
 	m_iFlags |= HUD_ACTIVE;
 	gHUD.AddHudElem(this);
 
+#ifdef HIPNOTIC
+	// added array to simplify weapon parsing
+	hipweapons[0] = 23;
+	hipweapons[1] = 7;
+	hipweapons[2] = 4;
+	hipweapons[3] = 16;
+
+#endif /* HIPNOTIC */
 	return 1;
 };
 
@@ -139,6 +147,32 @@ int CHudSBar::VidInit(void)
 	sb_finale = gHUD.GetSpriteIndex ("finale");
 	sb_inter = gHUD.GetSpriteIndex ("intermission");
 
+#ifdef HIPNOTIC
+	hsb_weapons[0][0] = gHUD.GetSpriteIndex ("inv_laser");
+	hsb_weapons[0][1] = gHUD.GetSpriteIndex ("inv_mjolnir");
+	hsb_weapons[0][2] = gHUD.GetSpriteIndex ("inv_gren_prox");
+	hsb_weapons[0][3] = gHUD.GetSpriteIndex ("inv_prox_gren");
+	hsb_weapons[0][4] = gHUD.GetSpriteIndex ("inv_prox");
+
+	hsb_weapons[1][0] = gHUD.GetSpriteIndex ("inv2_laser");
+	hsb_weapons[1][1] = gHUD.GetSpriteIndex ("inv2_mjolnir");
+	hsb_weapons[1][2] = gHUD.GetSpriteIndex ("inv2_gren_prox");
+	hsb_weapons[1][3] = gHUD.GetSpriteIndex ("inv2_prox_gren");
+	hsb_weapons[1][4] = gHUD.GetSpriteIndex ("inv2_prox");
+
+	for (i=0 ; i<5 ; i++)
+	{
+		hsb_weapons[2+i][0] = gHUD.GetSpriteIndex (UTIL_VarArgs("inva%i_laser",i+1));
+		hsb_weapons[2+i][1] = gHUD.GetSpriteIndex (UTIL_VarArgs("inva%i_mjolnir",i+1));
+		hsb_weapons[2+i][2] = gHUD.GetSpriteIndex (UTIL_VarArgs("inva%i_gren_prox",i+1));
+		hsb_weapons[2+i][3] = gHUD.GetSpriteIndex (UTIL_VarArgs("inva%i_prox_gren",i+1));
+		hsb_weapons[2+i][4] = gHUD.GetSpriteIndex (UTIL_VarArgs("inva%i_prox",i+1));
+	}
+
+	hsb_items[0] = gHUD.GetSpriteIndex ("sb_wsuit");
+	hsb_items[1] = gHUD.GetSpriteIndex ("sb_eshld");
+
+#endif /* HIPNOTIC */
 	m_iFlags |= HUD_INTERMISSION;	// g-cont. allow episode finales
 
 	return 1;
@@ -328,6 +362,61 @@ void CHudSBar::DrawInventory( float flTime )
 		}
 	}
 
+#ifdef HIPNOTIC
+      	int grenadeflashing=0;
+
+	for( i = 0; i < 4; i++ )
+	{
+		if( gHUD.items & ( 1 << hipweapons[i] ))
+		{
+			time = gHUD.item_gettime[hipweapons[i]];
+			flashon = (int)((flTime - time) * 10);
+			if( flashon >= 10 )
+			{
+				if( gHUD.stats[STAT_ACTIVEWEAPON] == (1 << hipweapons[i] ) )
+					flashon = 1;
+				else flashon = 0;
+			}
+			else flashon = (flashon % 5) + 2;
+
+			// check grenade launcher
+			if( i == 2 )
+			{
+				if( gHUD.items & IT_PROXIMITY_GUN )
+				{
+					if( flashon )
+					{
+						grenadeflashing = 1;
+						DrawPic( 96, -16, hsb_weapons[flashon][2] );
+					}
+				}
+			}
+			else if( i == 3 )
+			{
+				if( gHUD.items & ( IT_SHOTGUN << 4 ))
+				{
+					if( flashon && !grenadeflashing )
+					{
+						DrawPic( 96, -16, hsb_weapons[flashon][3] );
+					}
+					else if( !grenadeflashing )
+					{
+						DrawPic( 96, -16, hsb_weapons[0][3] );
+					}
+				}
+				else
+				{
+					DrawPic( 96, -16, hsb_weapons[flashon][4] );
+				}
+			}
+			else
+			{
+				DrawPic( 176 + (i * 24), -16, hsb_weapons[flashon][i] );
+			}
+		}
+	}
+
+#endif /* HIPNOTIC */
 	// ammo counts
 	for( i = 0; i < 4; i++ )
 	{
@@ -356,8 +445,34 @@ void CHudSBar::DrawInventory( float flTime )
 			}
 			else
 			{
+#ifndef HIPNOTIC
 				//MED 01/04/97 changed keys
 				DrawPic( 192 + i * 16, -16, sb_items[i] );
+#else /* HIPNOTIC */
+				if( i > 1 )
+				{
+					// MED 01/04/97 changed keys
+					DrawPic( 192 + i * 16, -16, sb_items[i] );
+				}
+			}
+		}
+	}
+
+	// hipnotic items
+	for( i = 0; i < 2; i++ )
+	{
+		if( gHUD.items & (1 << (24+i)))
+		{
+			time = gHUD.item_gettime[24+i];
+
+			if( time && time > flTime - 2 && flashon )
+			{
+				// flash frame
+			}
+			else
+			{
+				DrawPic( 288 + i * 16, -16, hsb_items[i] );
+#endif /* HIPNOTIC */
 			}
 		}
 	}
@@ -423,6 +538,14 @@ int CHudSBar::Draw(float fTime)
 
 	// health
 	DrawNum( 136, 0, gHUD.stats[STAT_HEALTH], 3, gHUD.stats[STAT_HEALTH] <= 25 );
+#ifdef HIPNOTIC
+
+	// keys (hipnotic only)
+	if( gHUD.items & IT_KEY1 )
+		DrawPic( 209, 3, sb_items[0] );
+	if( gHUD.items & IT_KEY2 )
+		DrawPic( 209, 12, sb_items[1] );
+#endif /* HIPNOTIC */
 
 	// armor
 	if (gHUD.items & IT_INVULNERABILITY)

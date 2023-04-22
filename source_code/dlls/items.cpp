@@ -55,8 +55,19 @@ void CItem::PlaceItem( void )
 		return;
 	}
 
+#ifdef HIPNOTIC
+	BOOL isKey = FALSE;
+
+	if( FClassnameIs( pev, "item_key1" ) || FClassnameIs( pev, "item_key2" ))
+		isKey = TRUE;
+
+#endif /* HIPNOTIC */
 	// g-cont: e3m2 has key on a moving platform. link them together to prevent loosing key
+#ifndef HIPNOTIC
 	if( g_fXashEngine && !FNullEnt( pev->groundentity ) && VARS( pev->groundentity )->movetype == MOVETYPE_PUSH )
+#else /* HIPNOTIC */
+	if( g_fXashEngine && !FNullEnt( pev->groundentity ) && VARS( pev->groundentity )->movetype == MOVETYPE_PUSH && isKey )
+#endif /* HIPNOTIC */
 	{ 
 		edict_t	*gnd = pev->groundentity;
 
@@ -105,8 +116,24 @@ void CItem::ItemTouch( CBaseEntity *pOther )
 		// send bonus flash (same as command "bf\n")
 		BONUS_FLASH( pPlayer->edict() );
 
+#ifdef HIPNOTIC
+		if (FClassnameIs( pev, "item_hornofconjuring" ))
+                    {
+			g_fHornActive = TRUE;
+			g_pHornCharmer = pOther;
+                    }
+
+#endif /* HIPNOTIC */
 		SUB_UseTargets( pOther, USE_TOGGLE, 0 );
 		SetTouch( NULL );
+#ifdef HIPNOTIC
+
+		if (FClassnameIs( pev, "item_hornofconjuring" ))
+                    {
+			g_fHornActive = FALSE;
+			g_pHornCharmer = NULL;
+                    }
+#endif /* HIPNOTIC */
 		
 		// player grabbed the item. 
 		g_pGameRules->PlayerGotItem( pPlayer, this );
@@ -486,6 +513,27 @@ class CItemArtifact : public CItem
 			PRECACHE_SOUND( "items/damage2.wav" );
 			PRECACHE_SOUND( "items/damage3.wav" );
 		}
+#ifdef HIPNOTIC
+		else if (FClassnameIs( pev, "item_artifact_empathy_shields" ))
+		{
+			PRECACHE_MODEL ("models/empathy.mdl");
+			PRECACHE_SOUND( "hipitems/empathy.wav" );
+			PRECACHE_SOUND( "hipitems/empathy2.wav" );
+			PRECACHE_SOUND( "items/suit2.wav" );
+		}
+		else if (FClassnameIs( pev, "item_artifact_wetsuit" ))
+		{
+			PRECACHE_MODEL ("models/wetsuit.mdl");
+			PRECACHE_SOUND( "misc/wetsuit.wav" );
+			PRECACHE_SOUND( "misc/weton.wav" );
+			PRECACHE_SOUND( "items/suit2.wav" );
+		}
+		else if (FClassnameIs( pev, "item_hornofconjuring" ))
+		{
+			PRECACHE_MODEL ("models/horn.mdl");
+			PRECACHE_SOUND( "hipitems/horn.wav" );
+		}
+#endif /* HIPNOTIC */
 	}
 
 	void Spawn( void )
@@ -520,8 +568,36 @@ class CItemArtifact : public CItem
 			pev->netname = MAKE_STRING("Quad Damage");
 			pev->team = IT_QUAD;
 		}
+#ifdef HIPNOTIC
+		else if (FClassnameIs( pev, "item_artifact_empathy_shields" ))
+		{
+			SET_MODEL(ENT(pev), "models/empathy.mdl");
+			pev->noise = MAKE_STRING( "hipitems/empathy.wav" );
+			pev->netname = MAKE_STRING("Empathy Shields");
+			pev->team = IT_EMPATHY_SHIELDS;
+		}
+		else if (FClassnameIs( pev, "item_artifact_wetsuit" ))
+		{
+			SET_MODEL(ENT(pev), "models/wetsuit.mdl");
+			pev->noise = MAKE_STRING( "misc/weton.wav" );
+			pev->netname = MAKE_STRING("Wetsuit");
+			pev->team = IT_WETSUIT;
+		}
+		else if (FClassnameIs( pev, "item_hornofconjuring" ))
+		{
+			SET_MODEL(ENT(pev), "models/horn.mdl");
+			pev->noise = MAKE_STRING( "hipitems/horn.wav" );
+			pev->netname = MAKE_STRING("Horn of Conjuring");
+		}
+#endif /* HIPNOTIC */
 
+#ifndef HIPNOTIC
 		UTIL_SetSize( pev, Vector( -16, -16, -24 ), Vector( 16, 16, 32 ));
+#else /* HIPNOTIC */
+		if (FClassnameIs( pev, "item_artifact_empathy_shields" ) || FClassnameIs( pev, "item_hornofconjuring" ))
+			UTIL_SetSize( pev, Vector( -16, -16, 0 ), Vector( 16, 16, 32 ));
+		else UTIL_SetSize( pev, Vector( -16, -16, -24 ), Vector( 16, 16, 32 ));
+#endif /* HIPNOTIC */
 		StartItem ();
 	}
 
@@ -552,8 +628,28 @@ class CItemArtifact : public CItem
 			pPlayer->m_flSuperDamageFinished = gpGlobals->time + 30;
 		}
 
+#ifdef HIPNOTIC
+		if (FClassnameIs( pev, "item_artifact_empathy_shields" ))
+		{
+			pPlayer->m_flEmpathyShieldTime = 1;
+			pPlayer->m_flEmpathyShieldFinished = gpGlobals->time + 30;
+		}
+
+		if (FClassnameIs( pev, "item_artifact_wetsuit" ))
+		{
+			pPlayer->m_flWetSuitTime = 1;
+			pPlayer->m_flWetSuitFinished = gpGlobals->time + 30;
+		}
+
+#endif /* HIPNOTIC */
 		CLIENT_PRINTF( pPlayer->edict(), print_console, UTIL_VarArgs( "You got the %s\n", STRING( pev->netname )));
+#ifndef HIPNOTIC
 		pPlayer->m_iItems |= pev->team;
+#else /* HIPNOTIC */
+
+		if (!FClassnameIs( pev, "item_hornofconjuring" ))
+			pPlayer->m_iItems |= pev->team;
+#endif /* HIPNOTIC */
 
 		return TRUE;		
 	}
@@ -579,6 +675,25 @@ The next attack from the player will do 4x damage
 */
 LINK_ENTITY_TO_CLASS(item_artifact_super_damage, CItemArtifact);
 
+#ifdef HIPNOTIC
+/*QUAKED item_artifact_empathy_shields (0 .5 .8) (-16 -16 0) (16 16 32)
+Empathy Shield.
+*/
+LINK_ENTITY_TO_CLASS(item_artifact_empathy_shields, CItemArtifact);
+
+/*QUAKED item_artifact_wetsuit (0 .5 .8) (-16 -16 -24) (16 16 32)
+Player takes no damage from electrical attacks and swims faster for 30 seconds
+*/
+LINK_ENTITY_TO_CLASS(item_artifact_wetsuit, CItemArtifact);
+
+/*QUAKED item_hornofconjuring (0 .5 .8) (-16 -16 0) (16 16 32)
+Horn of Conjuring.
+You must make func_spawn entities connected to this entity
+to spawn the charmed creature.
+*/
+LINK_ENTITY_TO_CLASS(item_hornofconjuring, CItemArtifact);
+
+#endif /* HIPNOTIC */
 #define SF_WEAPON_BIG2 	1
 
 class CItemAmmo : public CItem
@@ -797,6 +912,20 @@ class CItemWeapon : public CItem
 		{
 			PRECACHE_MODEL ("models/g_light.mdl"); 
 		}
+#ifdef HIPNOTIC
+		else if (FClassnameIs( pev, "weapon_mjolnir" ))
+		{
+			PRECACHE_MODEL ("models/g_hammer.mdl"); 
+		}
+		else if (FClassnameIs( pev, "weapon_laser_gun" ))
+		{
+			PRECACHE_MODEL ("models/g_laser.mdl"); 
+		}
+		else if (FClassnameIs( pev, "weapon_proximity_gun" ))
+		{
+			PRECACHE_MODEL ("models/g_prox.mdl"); 
+		}
+#endif /* HIPNOTIC */
 	}
 
 	void Spawn( void )
@@ -838,6 +967,26 @@ class CItemWeapon : public CItem
 			pev->netname = MAKE_STRING("Thunderbolt");
 			pev->team = IT_LIGHTNING;
 		}
+#ifdef HIPNOTIC
+		else if (FClassnameIs( pev, "weapon_mjolnir" ))
+		{
+			SET_MODEL(ENT(pev), "models/g_hammer.mdl"); 
+			pev->netname = MAKE_STRING("Mjolnir");
+			pev->team = IT_MJOLNIR;
+		}
+		else if (FClassnameIs( pev, "weapon_laser_gun" ))
+		{
+			SET_MODEL(ENT(pev), "models/g_laser.mdl"); 
+			pev->netname = MAKE_STRING("Laser Cannon");
+			pev->team = IT_LASER_CANNON;
+		}
+		else if (FClassnameIs( pev, "weapon_proximity_gun" ))
+		{
+			SET_MODEL(ENT(pev), "models/g_prox.mdl"); 
+			pev->netname = MAKE_STRING("Proximity Gun");
+			pev->team = IT_PROXIMITY_GUN;
+		}
+#endif /* HIPNOTIC */
 		pev->noise = MAKE_STRING( "weapons/pkup.wav" );
 
 		UTIL_SetSize( pev, Vector( -16, -16, 0 ), Vector( 16, 16, 56 ));
@@ -877,6 +1026,26 @@ class CItemWeapon : public CItem
 				return FALSE;
 			pPlayer->ammo_cells += 15;
 		}
+#ifdef HIPNOTIC
+		if (pev->team & IT_LASER_CANNON)
+		{
+			if (leave && (pPlayer->m_iItems & IT_LASER_CANNON) )
+				return FALSE;
+			pPlayer->ammo_cells += 30;
+		}
+		if (pev->team & IT_MJOLNIR)
+		{
+			if (leave && (pPlayer->m_iItems & IT_MJOLNIR) )
+				return FALSE;
+			pPlayer->ammo_cells += 30;
+		}
+		if (pev->team & IT_PROXIMITY_GUN)
+		{
+			if (leave && (pPlayer->m_iItems & IT_PROXIMITY_GUN) )
+				return FALSE;
+			pPlayer->ammo_rockets += 6;
+		}
+#endif /* HIPNOTIC */
 
 		CLIENT_PRINTF( pPlayer->edict(), print_console, UTIL_VarArgs( "You got the %s\n", STRING( pev->netname )));
 
@@ -919,6 +1088,20 @@ LINK_ENTITY_TO_CLASS(weapon_rocketlauncher, CItemWeapon);
 */
 LINK_ENTITY_TO_CLASS(weapon_lightning, CItemWeapon);
 
+#ifdef HIPNOTIC
+/*QUAKED weapon_mjolnir (0 .5 .8) (-16 -16 0) (16 16 32)
+*/
+LINK_ENTITY_TO_CLASS(weapon_mjolnir, CItemWeapon);
+
+/*QUAKED weapon_laser_gun (0 .5 .8) (-16 -16 0) (16 16 32)
+*/
+LINK_ENTITY_TO_CLASS(weapon_laser_gun, CItemWeapon);
+
+/*QUAKED weapon_proximity_gun (0 .5 .8) (-16 -16 0) (16 16 32)
+*/
+LINK_ENTITY_TO_CLASS(weapon_proximity_gun, CItemWeapon);
+
+#endif /* HIPNOTIC */
 //*********************************************************
 // weaponbox code:
 //*********************************************************
@@ -939,7 +1122,9 @@ CWeaponBox *CWeaponBox::DropBackpack( CBaseEntity *pVictim, int weapon )
 	pBackpack->pev->velocity.x = RANDOM_FLOAT( -100, 100 );
 	pBackpack->pev->velocity.y = RANDOM_FLOAT( -100, 100 );
 	pBackpack->pev->velocity.z = 100;
+#ifndef HIPNOTIC
 	pBackpack->Spawn();
+#endif /* ! HIPNOTIC */
 	pBackpack->pev->classname = MAKE_STRING( "backpack" );
 
 	// copy weapon and ammo
@@ -948,6 +1133,9 @@ CWeaponBox *CWeaponBox::DropBackpack( CBaseEntity *pVictim, int weapon )
 	pBackpack->ammo_nails = pVictim->ammo_nails;
 	pBackpack->ammo_rockets = pVictim->ammo_rockets;
 	pBackpack->ammo_cells = pVictim->ammo_cells;
+#ifdef HIPNOTIC
+	pBackpack->Spawn();
+#endif /* HIPNOTIC */
 
 	return pBackpack;
 }
@@ -972,6 +1160,31 @@ void CWeaponBox::Spawn( void )
 
 	pev->nextthink = gpGlobals->time + 120;	// remove after 2 minutes
 	SetThink( SUB_Remove );
+#ifdef HIPNOTIC
+
+	if (pev->team == IT_AXE)
+		pev->netname = MAKE_STRING("Axe");
+	else if (pev->team == IT_SHOTGUN)
+		pev->netname = MAKE_STRING("Shotgun");
+	else if (pev->team == IT_SUPER_SHOTGUN)
+		pev->netname = MAKE_STRING("Double-barrelled Shotgun");
+	else if (pev->team == IT_NAILGUN)
+		pev->netname = MAKE_STRING("Nailgun");
+	else if (pev->team == IT_SUPER_NAILGUN)
+		pev->netname = MAKE_STRING("Super Nailgun");
+	else if (pev->team == IT_GRENADE_LAUNCHER)
+		pev->netname = MAKE_STRING("Grenade Launcher");
+	else if (pev->team == IT_ROCKET_LAUNCHER)
+		pev->netname = MAKE_STRING("Rocket Launcher");
+	else if (pev->team == IT_LIGHTNING)
+		pev->netname = MAKE_STRING("Thunderbolt");
+	else if (pev->team == IT_LASER_CANNON)
+		pev->netname = MAKE_STRING("Laser Cannon");
+	else if (pev->team == IT_PROXIMITY_GUN)
+		pev->netname = MAKE_STRING("Proximity Gun");
+	else if (pev->team == IT_MJOLNIR)
+		pev->netname = MAKE_STRING("Mjolnir");
+#endif /* HIPNOTIC */
 }
 
 //=========================================================
@@ -990,6 +1203,7 @@ void CWeaponBox::Touch( CBaseEntity *pOther )
 
 	int best = pPlayer->W_BestWeapon();
 
+#ifndef HIPNOTIC
 	// change weapons
 	pPlayer->ammo_shells += ammo_shells;
 	pPlayer->ammo_nails += ammo_nails;
@@ -998,8 +1212,14 @@ void CWeaponBox::Touch( CBaseEntity *pOther )
 	pPlayer->m_iItems |= pev->team;
 	pPlayer->CheckAmmo();
 
+#endif /* ! HIPNOTIC */
 	CLIENT_PRINTF( pPlayer->edict(), print_console, "You get " );
 
+#ifdef HIPNOTIC
+	if ((pPlayer->m_iItems & pev->team) == 0)
+		CLIENT_PRINTF( pPlayer->edict(), print_console, UTIL_VarArgs( "the %s ", STRING(pev->netname)));
+
+#endif /* HIPNOTIC */
 	if (ammo_shells)
 		CLIENT_PRINTF( pPlayer->edict(), print_console, UTIL_VarArgs( "%i shells", ammo_shells ));
 
@@ -1013,6 +1233,16 @@ void CWeaponBox::Touch( CBaseEntity *pOther )
 		CLIENT_PRINTF( pPlayer->edict(), print_console, UTIL_VarArgs( "%i cells", ammo_cells ));
 
 	CLIENT_PRINTF( pPlayer->edict(), print_console, "\n" );
+#ifdef HIPNOTIC
+
+	// change weapons
+	pPlayer->ammo_shells += ammo_shells;
+	pPlayer->ammo_nails += ammo_nails;
+	pPlayer->ammo_rockets += ammo_rockets;
+	pPlayer->ammo_cells += ammo_cells;
+	pPlayer->m_iItems |= pev->team;
+	pPlayer->CheckAmmo();
+#endif /* HIPNOTIC */
 
 	if (pPlayer->m_iWeapon == best)
 		pPlayer->m_iWeapon = pPlayer->W_BestWeapon();

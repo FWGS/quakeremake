@@ -132,6 +132,10 @@ void GameDLLInit( void )
 		g_fXashEngine = TRUE;
 	else g_fXashEngine = FALSE;
 
+#ifdef HIPNOTIC
+	g_engfuncs.pfnAddServerCommand( "show_rotateclip", Cmd_ShowRotateClip_f );
+
+#endif /* HIPNOTIC */
 	CVAR_REGISTER (&noexit);
 	CVAR_REGISTER (&samelevel);
 

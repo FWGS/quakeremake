@@ -30,7 +30,15 @@
 #define SF_TRIGGER_NOMESSAGE		1
 #define SF_TRIGGER_NOTOUCH		1
 #define SF_PUSH_ONCE		1
+#ifdef HIPNOTIC
+#define SF_MULTI_USE		1
+#define SF_INVISIBLE		2
+#define SF_USE_GOLD_KEY		1
+#endif /* HIPNOTIC */
 
+#ifdef HIPNOTIC
+extern DLL_GLOBAL int		g_iWorldType;
+#endif /* HIPNOTIC */
 extern DLL_GLOBAL BOOL		g_fGameOver;
 
 class CBaseTrigger : public CBaseToggle
@@ -58,6 +66,10 @@ void CBaseTrigger::InitTrigger( void )
 
 	if( CVAR_GET_FLOAT("showtriggers") == 0 )
 		SetBits( pev->effects, EF_NODRAW );
+#ifdef HIPNOTIC
+
+	if( m_flCnt == 0.0f ) m_flCnt = -1.0f;
+#endif /* HIPNOTIC */
 }
 
 void CBaseTrigger :: KeyValue( KeyValueData *pkvd )
@@ -77,6 +89,9 @@ Variable sized repeatable trigger.  Must be targeted at one or more entities.
 If "health" is set, the trigger must be killed to activate each time.
 If "delay" is set, the trigger waits some time after activating before firing.
 "wait" : Seconds between triggerings. (.2 default)
+#ifdef HIPNOTIC
+"cnt" how many times it can be triggered (infinite default)
+#endif /* HIPNOTIC */
 If notouch is set, the trigger is only fired by other entities, not by touching.
 NOTOUCH has been obsoleted by trigger_relay!
 sounds
@@ -128,8 +143,17 @@ void CTriggerMultiple :: Spawn( void )
 	Precache ();
 
 	if (!m_flWait)
+#ifndef HIPNOTIC
 		m_flWait = 0.2;
 
+#else /* HIPNOTIC */
+	{
+		// NASTY HACK: breaking beams on lightning traps looks are ugly
+		if( FStrEq( STRING( gpWorld->pev->model ), "maps/hip2m3.bsp" ) && FStrEq( STRING( pev->target ), "2300" ))
+			m_flWait = 0.1;
+		else m_flWait = 0.2;
+	}
+#endif /* HIPNOTIC */
 	InitTrigger();
 
 	if (pev->health > 0)
@@ -197,6 +221,19 @@ void CTriggerMultiple :: ActivateMultiTrigger( CBaseEntity *pActivator )
 		pev->nextthink = gpGlobals->time + 0.1;
 		SetThink(  SUB_Remove );
 	}
+#ifdef HIPNOTIC
+
+	if( m_flCnt > 0 )
+	{
+		m_flCnt--;
+		if( m_flCnt == 0.0f )
+		{
+			SetTouch( NULL );
+			pev->nextthink = gpGlobals->time + 0.1;
+			SetThink(  SUB_Remove );
+		}
+	}
+#endif /* HIPNOTIC */
 }
 
 // the wait time has passed, so set back up for another activation
@@ -287,7 +324,11 @@ LINK_ENTITY_TO_CLASS( trigger_relay, CTriggerRelay );
 
 void CTriggerRelay :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
+#ifndef HIPNOTIC
 	SUB_UseTargets( this, USE_TOGGLE, 0 );
+#else /* HIPNOTIC */
+	SUB_UseTargets( pActivator, USE_TOGGLE, 0 );
+#endif /* HIPNOTIC */
 }
 
 /*QUAKED trigger_secret (.5 .5 .5) ?
@@ -699,12 +740,19 @@ void CTriggerOnlyRegistered::Touch( CBaseEntity *pOther )
 Any object touching this will be hurt
 set dmg to damage amount
 defalt dmg = 5
+#ifdef HIPNOTIC
+"cnt" default infinite, how many times to trigger
+#endif /* HIPNOTIC */
 */
 class CTriggerHurt : public CBaseTrigger
 {
 public:
 	void Spawn( void );
+#ifndef HIPNOTIC
 	void Touch( CBaseEntity *pOther );
+#else /* HIPNOTIC */
+	void EXPORT HurtTouch( CBaseEntity *pOther );
+#endif /* HIPNOTIC */
 };
 
 LINK_ENTITY_TO_CLASS( trigger_hurt, CTriggerHurt );
@@ -712,12 +760,19 @@ LINK_ENTITY_TO_CLASS( trigger_hurt, CTriggerHurt );
 void CTriggerHurt :: Spawn( void )
 {
 	InitTrigger();
+#ifdef HIPNOTIC
+	SetTouch( HurtTouch );
+#endif /* HIPNOTIC */
 
 	if (!pev->dmg)
 		pev->dmg = 5;
 }
 
+#ifndef HIPNOTIC
 void CTriggerHurt :: Touch( CBaseEntity *pOther )
+#else /* HIPNOTIC */
+void CTriggerHurt :: HurtTouch( CBaseEntity *pOther )
+#endif /* HIPNOTIC */
 {
 	if (!pOther->pev->takedamage)
 		return;
@@ -783,6 +838,19 @@ void CTriggerHurt :: Touch( CBaseEntity *pOther )
 
 	// apply damage every half second
 	pev->dmgtime = gpGlobals->time + 0.5;// half second delay until this trigger can hurt toucher again
+#ifdef HIPNOTIC
+
+	if( m_flCnt > 0 )
+	{
+		m_flCnt--;
+		if( m_flCnt == 0.0f )
+		{
+			SetTouch( NULL );
+			pev->nextthink = gpGlobals->time + 0.1;
+			SetThink(  SUB_Remove );
+		}
+	}
+#endif /* HIPNOTIC */
 }
 
 /*QUAKED trigger_push (.5 .5 .5) ? PUSH_ONCE
@@ -842,12 +910,19 @@ void CTriggerPush :: Touch( CBaseEntity *pOther )
 Walking monsters that touch this will jump in the direction of the trigger's angle
 "speed" default to 200, the speed thrown forward
 "height" default to 200, the speed thrown upwards
+#ifdef HIPNOTIC
+"cnt" default infinite, how many times to trigger
+#endif /* HIPNOTIC */
 */
 class CTriggerMonsterJump : public CBaseTrigger
 {
 public:
 	void Spawn( void );
+#ifndef HIPNOTIC
 	void Touch( CBaseEntity *pOther );
+#else /* HIPNOTIC */
+	void EXPORT JumpTouch( CBaseEntity *pOther );
+#endif /* HIPNOTIC */
 	void KeyValue( KeyValueData *pkvd );
 };
 
@@ -862,6 +937,9 @@ void CTriggerMonsterJump :: Spawn ( void )
 	if (pev->angles == g_vecZero)
 		pev->angles = Vector( 0, 360, 0 );
 
+#ifdef HIPNOTIC
+	SetTouch( JumpTouch );
+#endif /* HIPNOTIC */
 	InitTrigger ();
 }
 
@@ -876,7 +954,11 @@ void CTriggerMonsterJump :: KeyValue( KeyValueData *pkvd )
 		CBaseTrigger::KeyValue( pkvd );
 }
 
+#ifndef HIPNOTIC
 void CTriggerMonsterJump :: Touch( CBaseEntity *pOther )
+#else /* HIPNOTIC */
+void CTriggerMonsterJump :: JumpTouch( CBaseEntity *pOther )
+#endif /* HIPNOTIC */
 {
 	entvars_t *pevOther = pOther->pev;
 
@@ -895,6 +977,19 @@ void CTriggerMonsterJump :: Touch( CBaseEntity *pOther )
 	
 	pevOther->flags &= ~FL_ONGROUND;
 	pevOther->velocity.z = m_flHeight;
+#ifdef HIPNOTIC
+
+	if( m_flCnt > 0 )
+	{
+		m_flCnt--;
+		if( m_flCnt == 0.0f )
+		{
+			SetTouch( NULL );
+			pev->nextthink = gpGlobals->time + 0.1;
+			SetThink(  SUB_Remove );
+		}
+	}
+#endif /* HIPNOTIC */
 }
 
 // ====================== TRIGGER_CHANGELEVEL ================================
@@ -1047,4 +1142,377 @@ void CChangeLevel :: ChangeLevelNow( CBaseEntity *pActivator )
 {
 	ALERT( at_console, "CHANGE LEVEL: %s\n", g_sNextMap );
 	CHANGE_LEVEL( g_sNextMap, NULL );
+#ifdef HIPNOTIC
+}
+
+/*QUAKED trigger_damagethreshold (0 .5 .8) ? MULTI_USE INVISIBLE
+Triggers only when a threshold of damage is exceeded.
+When used in conjunction with func_breakawaywall, allows
+walls that may be destroyed with a rocket blast.
+
+MULTI_USE tells the trigger to not to remove itself after
+being fired.  Allows the trigger to be used multiple times.
+
+INVISIBLE tells the trigger to not be visible.
+
+"health" specifies how much damage must occur before trigger fires.
+Default is 60.
+
+*/
+class CTriggerDamageThreshold : public CBaseTrigger
+{
+public:
+	void Spawn( void );
+	int TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType );
+};
+
+LINK_ENTITY_TO_CLASS( trigger_damagethreshold, CTriggerDamageThreshold );
+
+void CTriggerDamageThreshold :: Spawn( void )
+{
+	pev->angles = g_vecZero;
+
+	pev->solid = SOLID_BSP;
+	pev->movetype = MOVETYPE_PUSH;
+
+	SET_MODEL( ENT(pev), STRING(pev->model) );
+
+	if( pev->spawnflags & SF_INVISIBLE )
+		pev->effects |= EF_NODRAW;
+
+	if( !pev->health )
+		pev->health = 60;
+	pev->takedamage = DAMAGE_YES;
+}
+
+int CTriggerDamageThreshold :: TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType )
+{
+	if (!pev->takedamage)
+		return 0;
+
+	if( flDamage < pev->health )
+		return 0;	// not enough damage
+
+	pev->takedamage = DAMAGE_NO;
+	SUB_UseTargets( CBaseEntity::Instance( pevAttacker ), USE_TOGGLE, 0 );
+	pev->takedamage = DAMAGE_YES;
+
+	if( !FBitSet( pev->spawnflags, SF_MULTI_USE ))
+	{
+		UTIL_Remove( this );
+	}
+
+	return 1;
+}
+
+/*QUAKED trigger_setgravity (.5 .5 .5) ?
+set the gravity of a player
+"gravity" what to set the players gravity to
+ - 0 (default) normal gravity
+ - 1 no gravity
+ - 2 almost no gravity
+ - ...
+ - 101 normal gravity
+ - 102 slightly higher gravity
+ - ...
+ - 1000 very high gravity
+*/
+class CTriggerSetGravity : public CBaseTrigger
+{
+public:
+	void Spawn( void );
+	void Touch( CBaseEntity *pOther );
+};
+
+LINK_ENTITY_TO_CLASS( trigger_setgravity, CTriggerSetGravity );
+
+void CTriggerSetGravity :: Spawn ( void )
+{
+	InitTrigger ();
+
+	if( !pev->gravity ) pev->gravity = -1.0f;
+	else pev->gravity = ((pev->gravity - 1.0f) / 100.0f);
+}
+
+void CTriggerSetGravity :: Touch( CBaseEntity *pOther )
+{
+	if( !pOther->IsPlayer( ))
+		return;
+
+	if( pev->gravity == -1.0f )
+		pOther->pev->gravity = 1.0f;
+	else pOther->pev->gravity = pev->gravity;
+}
+
+class CTriggerUseKey : public CBaseTrigger
+{
+public:
+	void Spawn( void );
+	void Precache( void );
+	void EXPORT TouchKey( CBaseEntity *pOther );
+	void EXPORT UseKey( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+};
+
+LINK_ENTITY_TO_CLASS( trigger_usekey, CTriggerUseKey );
+
+void CTriggerUseKey :: Precache( void )
+{
+	if (g_iWorldType == WORLDTYPE_MEDIEVAL)
+	{
+		PRECACHE_SOUND ("doors/medtry.wav");
+		PRECACHE_SOUND ("doors/meduse.wav");
+		pev->noise2 = MAKE_STRING( "doors/medtry.wav" );
+		pev->noise3 = MAKE_STRING( "doors/meduse.wav" );
+	}
+	else if (g_iWorldType == WORLDTYPE_RUNIC)
+	{
+		PRECACHE_SOUND ("doors/runetry.wav");
+		PRECACHE_SOUND ("doors/runeuse.wav");
+		pev->noise2 = MAKE_STRING( "doors/runetry.wav" );
+		pev->noise3 = MAKE_STRING( "doors/runeuse.wav" );
+	}
+	else if (g_iWorldType == WORLDTYPE_PRESENT)
+	{
+		PRECACHE_SOUND ("doors/basetry.wav");
+		PRECACHE_SOUND ("doors/baseuse.wav");
+		pev->noise2 = MAKE_STRING( "doors/basetry.wav" );
+		pev->noise3 = MAKE_STRING( "doors/baseuse.wav" );
+	}
+}
+
+void CTriggerUseKey :: Spawn( void )
+{
+	Precache();
+
+	if( pev->spawnflags & SF_USE_GOLD_KEY )
+		pev->team = IT_KEY2;
+	else pev->team = IT_KEY1;
+
+	SetTouch( TouchKey );
+	SetUse( UseKey );
+
+	InitTrigger ();
+}
+
+void CTriggerUseKey :: UseKey( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
+{
+	TouchKey( pActivator );
+}
+
+void CTriggerUseKey :: TouchKey( CBaseEntity *pOther )
+{
+	// Ignore touches by anything but players
+	if (!FClassnameIs(pOther->pev, "player"))
+		return;
+
+	if (pev->pain_finished > gpGlobals->time)
+		return;
+
+	pev->pain_finished = gpGlobals->time + 2;
+
+	// FIXME: blink key on player's status bar
+	if (( pev->team & pOther->m_iItems ) != pev->team )
+	{
+		if( pev->message != iStringNull )
+		{
+			CenterPrint( pOther->pev, STRING( pev->message ));
+		}
+		else
+		{
+			if (pev->team == IT_KEY1)
+			{
+				if (g_iWorldType == WORLDTYPE_PRESENT)
+				{
+					CenterPrint( pOther->pev, "You need the silver keycard" );
+				}
+				else if (g_iWorldType == WORLDTYPE_RUNIC)
+				{
+					CenterPrint( pOther->pev, "You need the silver runekey" );
+				}
+				else if (g_iWorldType == WORLDTYPE_MEDIEVAL)
+				{
+					CenterPrint( pOther->pev, "You need the silver key" );
+				}
+			}
+			else
+			{
+				if (g_iWorldType == WORLDTYPE_PRESENT)
+				{
+					CenterPrint( pOther->pev, "You need the gold keycard" );
+				}
+				else if (g_iWorldType == WORLDTYPE_RUNIC)
+				{
+					CenterPrint( pOther->pev, "You need the gold runekey" );
+				}
+				else if (g_iWorldType == WORLDTYPE_MEDIEVAL)
+				{
+					CenterPrint( pOther->pev, "You need the gold key" );
+				}
+			}
+		}
+
+		EMIT_SOUND(ENT(pev), CHAN_VOICE, (char*)STRING(pev->noise2), 1, ATTN_NORM);
+		return;
+	}
+
+	// remove player keys
+	pOther->m_iItems &= ~pev->team;
+
+	SetTouch( NULL );
+	SetUse( NULL );
+
+	// we can't just remove (self) here, because this is a touch function
+	// called while C code is looping through area links...
+	SetThink( SUB_Remove );
+	pev->nextthink = gpGlobals->time + 0.1f;
+	pev->message = iStringNull;
+
+	EMIT_SOUND(ENT(pev), CHAN_VOICE, (char*)STRING(pev->noise3), 1, ATTN_NORM);
+	SUB_UseTargets( pOther, USE_TOGGLE, 0 );
+}
+
+/*QUAKED trigger_command (0.3 0.1 0.6) (-10 -10 -8) (10 10 8)
+ When triggered, stuffs a command into the console to allow map
+ designers to set server variables.
+
+ "message" is the command to send to the console.
+*/
+class CTriggerCommand : public CBaseEntity
+{
+public:
+	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+};
+LINK_ENTITY_TO_CLASS( trigger_command, CTriggerCommand );
+
+void CTriggerCommand::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
+{
+	char szCommand[256];
+
+	if (pev->message)
+	{
+		sprintf( szCommand, "%s\n", STRING( pev->message ));
+		SERVER_COMMAND( szCommand );
+	}
+}
+
+/*QUAKED trigger_waterfall (.2 .5 .2) ?
+ Pushes the player in the direction specified by angles.
+
+ "speed" is the strength of the push (default 50).
+ "count" amount of random xy movement to add to velocity (default 100).
+*/
+class CTriggerWaterFall : public CBaseTrigger
+{
+public:
+	void Spawn( void );
+	void Touch( CBaseEntity *pOther );
+};
+
+LINK_ENTITY_TO_CLASS( trigger_waterfall, CTriggerWaterFall );
+
+void CTriggerWaterFall :: Spawn ( void )
+{
+	if (!pev->speed)
+		pev->speed = 200;
+	if (!m_flHeight)
+		m_flHeight = 200;
+	if (pev->angles == g_vecZero)
+		pev->angles = Vector( 0, 360, 0 );
+
+	InitTrigger ();
+
+	if( m_flCount == 0 )
+		m_flCount = 100;
+
+	if( pev->speed == 0 )
+		pev->movedir *= 50.0f;
+	else pev->movedir *= pev->speed;
+}
+
+void CTriggerWaterFall :: Touch( CBaseEntity *pOther )
+{
+	entvars_t *pevOther = pOther->pev;
+
+	if (!pOther->IsPlayer())
+		return;// only affect players
+
+	pevOther->velocity += pev->movedir;
+	pevOther->velocity.x += m_flCount * RANDOM_FLOAT(-0.5, 0.5);
+	pevOther->velocity.y += m_flCount * RANDOM_FLOAT(-0.5, 0.5);
+}
+
+/*QUAKED trigger_decoy_use (.5 .5 .5) ?
+ only the decoy player can trigger this
+ once triggers, all targets are used
+*/
+class CTriggerDecoy : public CBaseTrigger
+{
+public:
+	void Spawn( void );
+	void EXPORT DecoyTouch( CBaseEntity *pOther );
+};
+
+LINK_ENTITY_TO_CLASS( trigger_decoy_use, CTriggerDecoy );
+
+void CTriggerDecoy :: Spawn ( void )
+{
+	if( g_pGameRules->IsDeathmatch( ))
+	{
+		REMOVE_ENTITY( ENT(pev) );
+		return;
+	}
+
+	InitTrigger ();
+	SetTouch( DecoyTouch );
+}
+
+void CTriggerDecoy :: DecoyTouch( CBaseEntity *pOther )
+{
+	if (!FClassnameIs( pOther->pev, "monster_decoy"))
+		return;// only affect decoys
+
+	SetTouch( NULL );
+	SetThink( SUB_Remove );
+	pev->nextthink = gpGlobals->time + 0.1f;
+
+	SUB_UseTargets( pOther, USE_TOGGLE, 0 );
+}
+
+/*QUAKED trigger_remove (.5 .5 .5) ? ignoremonsters ignoreplayers
+Variable sized trigger that removes the thing
+that touches it.  Does not affect monsters or
+players.
+*/
+class CTriggerRemove : public CBaseTrigger
+{
+public:
+	void Spawn( void );
+	void EXPORT RemoveTouch( CBaseEntity *pOther );
+};
+
+LINK_ENTITY_TO_CLASS( trigger_remove, CTriggerRemove );
+
+void CTriggerRemove :: Spawn ( void )
+{
+	pev->button = FL_CLIENT|FL_MONSTER;
+
+	if (pev->spawnflags & 1)
+		pev->button &= ~FL_MONSTER;
+	if (pev->spawnflags & 2)
+		pev->button &= ~FL_CLIENT;
+
+	InitTrigger ();
+	SetTouch( RemoveTouch );
+}
+
+void CTriggerRemove :: RemoveTouch( CBaseEntity *pOther )
+{
+	if (pOther->pev->flags & pev->button)
+		return;
+
+	pOther->SetTouch( NULL );
+	pOther->pev->modelindex = 0;
+	pOther->pev->model = 0;
+	UTIL_Remove( pOther );
+#endif /* HIPNOTIC */
 }

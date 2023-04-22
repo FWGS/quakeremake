@@ -25,6 +25,10 @@
 #include "cbase.h"
 #include "animation.h"
 #include "saverestore.h"
+#ifdef HIPNOTIC
+#include "activity.h"
+#include "activitymap.h"
+#endif /* HIPNOTIC */
 
 TYPEDESCRIPTION CBaseAnimating::m_SaveData[] = 
 {
@@ -35,6 +39,21 @@ TYPEDESCRIPTION CBaseAnimating::m_SaveData[] =
 	DEFINE_FIELD( CBaseAnimating, m_fSequenceLoops, FIELD_BOOLEAN ),
 }; IMPLEMENT_SAVERESTORE( CBaseAnimating, CBaseDelay );
 
+#ifdef HIPNOTIC
+const char *CBaseAnimating :: GetNameForActivity( int activity )
+{
+	static char	string[64];
+
+	if( activity == -1 )
+		return "not found";
+
+	if( activity > ( ARRAYSIZE( activity_map )))
+		sprintf( string, "%i", activity );
+	else strncpy( string, activity_map[activity].name, sizeof( string ) - 1 );
+
+	return string;
+}
+#endif /* HIPNOTIC */
 
 //=========================================================
 // StudioFrameAdvance - advance the animation frame up to the current time

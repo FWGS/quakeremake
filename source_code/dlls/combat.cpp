@@ -181,7 +181,11 @@ Vector CGib :: VelocityForDamage( float flDamage )
 	return vecVelocity;
 }
 
+#ifndef HIPNOTIC
 void CGib :: ThrowHead( const char *szGibName, entvars_t *pevVictim )
+#else /* HIPNOTIC */
+void CGib :: ThrowHead( const char *szGibName, entvars_t *pevVictim, float zoffset )
+#endif /* HIPNOTIC */
 {
 	CGib *pGib = GetClassPtr( (CGib *)NULL );
 	CQuakeMonster *pMonster = CBaseEntity :: Instance( pevVictim )->GetMonster();
@@ -195,14 +199,25 @@ void CGib :: ThrowHead( const char *szGibName, entvars_t *pevVictim )
 	// spawn the gib somewhere in the monster's bounding volume
 	pGib->pev->origin.x = pevVictim->absmin.x + pevVictim->size.x * (RANDOM_FLOAT ( 0 , 1 ) );
 	pGib->pev->origin.y = pevVictim->absmin.y + pevVictim->size.y * (RANDOM_FLOAT ( 0 , 1 ) );
+#ifndef HIPNOTIC
 	pGib->pev->origin.z = pevVictim->absmin.z + pevVictim->size.z * (RANDOM_FLOAT ( 0 , 1 ) ) + 1;
+#else /* HIPNOTIC */
+	pGib->pev->origin.z = pevVictim->absmin.z + pevVictim->size.z * (RANDOM_FLOAT ( 0 , 1 ) ) + zoffset;
+#endif /* HIPNOTIC */
 	pGib->pev->velocity = pGib->VelocityForDamage( pevVictim->health );
 	pGib->pev->avelocity.x = pGib->pev->avelocity.z = 0; // yaw only
+#ifdef HIPNOTIC
+	pGib->m_bGorging = TRUE;
+#endif /* HIPNOTIC */
 
 	UTIL_SetSize(pGib->pev, g_vecZero, g_vecZero );
 }
 
+#ifndef HIPNOTIC
 void CGib :: ThrowGib( const char *szGibName, entvars_t *pevVictim )
+#else /* HIPNOTIC */
+void CGib :: ThrowGib( const char *szGibName, entvars_t *pevVictim, float zoffset )
+#endif /* HIPNOTIC */
 {
 	CQuakeMonster *pMonster = CBaseEntity :: Instance( pevVictim )->GetMonster();
 
@@ -214,7 +229,11 @@ void CGib :: ThrowGib( const char *szGibName, entvars_t *pevVictim )
 		pGib->Spawn( szGibName );
 		pGib->pev->origin.x = pevVictim->absmin.x + pevVictim->size.x * (RANDOM_FLOAT ( 0 , 1 ) );
 		pGib->pev->origin.y = pevVictim->absmin.y + pevVictim->size.y * (RANDOM_FLOAT ( 0 , 1 ) );
+#ifndef HIPNOTIC
 		pGib->pev->origin.z = pevVictim->absmin.z + pevVictim->size.z * (RANDOM_FLOAT ( 0 , 1 ) ) + 1;
+#else /* HIPNOTIC */
+		pGib->pev->origin.z = pevVictim->absmin.z + pevVictim->size.z * (RANDOM_FLOAT ( 0 , 1 ) ) + zoffset;
+#endif /* HIPNOTIC */
 		pGib->pev->velocity = pGib->VelocityForDamage( pevVictim->health );
 
 		if( pMonster != NULL )

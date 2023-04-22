@@ -36,6 +36,9 @@
 #include "weaponinfo.h"
 #include "usercmd.h"
 #include "netadr.h"
+#ifdef HIPNOTIC
+#include "shake.h"
+#endif /* HIPNOTIC */
 
 extern DLL_GLOBAL ULONG		g_ulModelIndexPlayer;
 extern DLL_GLOBAL BOOL		g_fGameOver;
@@ -148,6 +151,47 @@ void ExitIntermission( edict_t *pEntity )
 			CenterPrint( &pEntity->v, "Finale4" );
 			return;
 		}
+#ifdef HIPNOTIC
+		else if (FStrEq( STRING( gpWorld->pev->model ), "maps/hip1m4.bsp" ))
+		{
+			MESSAGE_BEGIN( MSG_ALL, SVC_CDTRACK );
+				WRITE_BYTE( 6 );
+				WRITE_BYTE( 3 );
+			MESSAGE_END();
+
+			MESSAGE_BEGIN(MSG_ALL, SVC_FINALE);
+			MESSAGE_END();
+
+			CenterPrint( &pEntity->v, "Hipnotic_Finale1" );
+			return;
+		}
+		else if (FStrEq( STRING( gpWorld->pev->model ), "maps/hip2m5.bsp" ))
+		{
+			MESSAGE_BEGIN( MSG_ALL, SVC_CDTRACK );
+				WRITE_BYTE( 6 );
+				WRITE_BYTE( 3 );
+			MESSAGE_END();
+
+			MESSAGE_BEGIN(MSG_ALL, SVC_FINALE);
+			MESSAGE_END();
+
+			CenterPrint( &pEntity->v, "Hipnotic_Finale3" );
+			return;
+		}
+		else if (FStrEq( STRING( gpWorld->pev->model ), "maps/hipend.bsp" ))
+		{
+			MESSAGE_BEGIN( MSG_ALL, SVC_CDTRACK );
+				WRITE_BYTE( 6 );
+				WRITE_BYTE( 3 );
+			MESSAGE_END();
+
+			MESSAGE_BEGIN(MSG_ALL, SVC_FINALE);
+			MESSAGE_END();
+
+			CenterPrint( &pEntity->v, "Hipnotic_Armagon" );
+			return;
+		}
+#endif /* HIPNOTIC */
 
 		GotoNextMap();
 	}
@@ -169,12 +213,159 @@ void ExitIntermission( edict_t *pEntity )
 			CenterPrint( &pEntity->v, "Shub-Niggurath" );
 			return;
 		}
+#ifndef HIPNOTIC
 		
+#else /* HIPNOTIC */
+
+		if (FStrEq( STRING( gpWorld->pev->model ), "maps/hip1m4.bsp" ))
+		{
+			MESSAGE_BEGIN(MSG_ALL, SVC_FINALE);
+			MESSAGE_END();
+
+			CenterPrint( &pEntity->v, "Hipnotic_Finale2" );
+			return;
+		}		
+		else if (FStrEq( STRING( gpWorld->pev->model ), "maps/hip2m5.bsp" ))
+		{
+			MESSAGE_BEGIN(MSG_ALL, SVC_FINALE);
+			MESSAGE_END();
+
+			CenterPrint( &pEntity->v, "Hipnotic_Finale4" );
+			return;
+		}
+		else if (FStrEq( STRING( gpWorld->pev->model ), "maps/hipend.bsp" ))
+		{
+			MESSAGE_BEGIN(MSG_ALL, SVC_FINALE);
+			MESSAGE_END();
+
+			CenterPrint( &pEntity->v, "Hipnotic_GameFinale" );
+			g_intermission_exittime = gpGlobals->time + 100000;
+			g_intermission_seqtime = gpGlobals->time + 30.0f;
+			SERVER_COMMAND( "s_fade 35\n" );
+			g_intermission_sequence = 1;	// start finale sequence
+			return;
+		}
+#endif /* HIPNOTIC */
 	}
 
 	GotoNextMap();
 };
 
+#ifdef HIPNOTIC
+void FinaleSceneThink( edict_t *pEntity )
+{
+	if (gpGlobals->time < g_intermission_seqtime)
+		return;
+
+	if (g_intermission_sequence == 1)
+	{
+		MESSAGE_BEGIN(MSG_ALL, SVC_FINALE);
+		MESSAGE_END();
+
+		CenterPrint( &pEntity->v, "Hipnotic_GameFinale2" );
+		g_intermission_seqtime = gpGlobals->time + 8.0f; 
+		g_intermission_sequence = 2;
+	}
+	else if (g_intermission_sequence == 2)
+	{
+		CVAR_SET_STRING("room_type", "23");
+		EMIT_SOUND( pEntity, CHAN_VOICE, "misc/exit01.wav", 1, ATTN_NONE );
+		g_intermission_seqtime = gpGlobals->time + 6.0f; 
+		g_intermission_sequence = 3;
+	}
+	else if (g_intermission_sequence == 3)
+	{
+		EMIT_SOUND( pEntity, CHAN_VOICE, "misc/exit02.wav", 1, ATTN_NONE );
+		g_intermission_seqtime = gpGlobals->time + 3.4f; 
+		g_intermission_sequence = 4;
+	}
+	else if (g_intermission_sequence == 4)
+	{
+		if (g_pPlayerDecoy)
+		{
+			CVAR_SET_STRING("room_type", "0");
+			EMIT_SOUND( pEntity, CHAN_ITEM, "boss2/death.wav", 1, ATTN_NONE );
+			EMIT_SOUND( pEntity, CHAN_BODY, "ambience/rumble.wav", 1, ATTN_NONE );
+			LIGHT_STYLE( 0, "abcdefghijklmlkjihgfedcb" );	// apply to world
+			UTIL_ScreenShake( g_pPlayerDecoy->pev->origin, 128.0f, 8.0f, 16.0f, 500.0f );
+			g_pPlayerDecoy->pev->renderfx = kRenderFxExpand;
+		}
+		else ALERT( at_error, "No decoy found!\n" );
+		g_intermission_seqtime = gpGlobals->time + 8.0f; 
+		g_intermission_sequence = 5;
+	}
+	else if (g_intermission_sequence == 5)
+	{
+		EMIT_SOUND( pEntity, CHAN_VOICE, "boss2/pop2.wav", 1, ATTN_NORM );
+
+		if (g_pPlayerDecoy)
+		{
+			Vector vecSrc = g_pPlayerDecoy->pev->origin;
+			float x, y, z;
+
+			g_pPlayerDecoy->pev->health = -999;
+
+			z = 8;
+			while( z <= 96 )
+			{
+				x = -32;
+				while( x <= 32 )
+				{
+					y = -32;
+					while( y <= 32 )
+					{
+						g_pPlayerDecoy->pev->origin.x = vecSrc.x + x;
+						g_pPlayerDecoy->pev->origin.y = vecSrc.y + y;
+						g_pPlayerDecoy->pev->origin.z = vecSrc.z + z;
+
+						float r = RANDOM_FLOAT( 0.0f, 1.0f );
+						if( r < 0.3f )				
+							CGib::ThrowGib( "models/gib1.mdl", g_pPlayerDecoy->pev );
+						else if( r < 0.6f )
+							CGib::ThrowGib( "models/gib2.mdl", g_pPlayerDecoy->pev );
+						else
+							CGib::ThrowGib( "models/gib3.mdl", g_pPlayerDecoy->pev );
+						y = y + 16;
+					}
+					x = x + 16;
+				}
+				z = z + 48;
+			}
+
+			g_pPlayerDecoy->pev->health = 100.0f;
+
+			// g-cont. i can see no reason to remove the oldone and the spawn fake client entity
+			// i've just replace model :-)
+			SET_MODEL(g_pPlayerDecoy->edict(), "models/freeman.mdl");
+			UTIL_SetOrigin( g_pPlayerDecoy->pev, vecSrc + Vector( 0.0f, 0.0f, 10.0f ));
+			g_pPlayerDecoy->pev->weaponmodel = MAKE_STRING("models/p_crowbar.mdl");
+			g_pPlayerDecoy->pev->effects |= EF_NOINTERP;
+			g_pPlayerDecoy->pev->renderfx = kRenderFxNone;
+		}
+
+		STOP_SOUND (pEntity, CHAN_BODY, "ambience/rumble.wav");
+		STOP_SOUND (pEntity, CHAN_ITEM, "boss2/death.wav");
+
+		MESSAGE_BEGIN( MSG_ALL, SVC_CDTRACK );
+			WRITE_BYTE( 10 );
+			WRITE_BYTE( 11 );
+		MESSAGE_END();
+
+		LIGHT_STYLE( 0, "m" );
+
+		g_intermission_seqtime = gpGlobals->time + 39.0f; 
+		g_intermission_sequence = 6;
+	}
+	else if (g_intermission_sequence == 6)
+	{
+		UTIL_ScreenFadeAll( g_vecZero, 12.0f, 0.f, 255, FFADE_OUT|FFADE_STAYOUT );
+		g_engfuncs.pfnEndSection( "oem_end_credits" );
+		g_intermission_seqtime = gpGlobals->time + 1000.0f; 
+		g_intermission_sequence = 7;
+	}
+}
+
+#endif /* HIPNOTIC */
 /*
 ============
 IntermissionThink
@@ -184,6 +375,11 @@ When the player presses attack or jump, change to the next level
 */
 void IntermissionThink( edict_t *pEntity )
 {
+#ifdef HIPNOTIC
+	if (g_intermission_sequence)
+		FinaleSceneThink (pEntity);
+
+#endif /* HIPNOTIC */
 	if (gpGlobals->time < g_intermission_exittime)
 		return;
 
@@ -653,6 +849,9 @@ void ServerDeactivate( void )
 		return;
 	}
 
+#ifdef HIPNOTIC
+	g_pPlayerDecoy = NULL; // invalidate decoy
+#endif /* HIPNOTIC */
 	g_serveractive = 0;
 
 	// Peform any shutdown operations here...
@@ -836,6 +1035,35 @@ void ClientObituary( entvars_t *pevVictim, entvars_t *pevAttacker )
 
 				pevAttacker->frags += 1;
 
+#ifdef HIPNOTIC
+				if (g_fEmpathyUsed)
+				{
+					g_engfuncs.pfnServerPrint( STRING( pevVictim->netname ));
+
+					if (rnum)
+						g_engfuncs.pfnServerPrint (" shares ");
+					else
+						g_engfuncs.pfnServerPrint (" feels ");
+
+					g_engfuncs.pfnServerPrint (STRING(pevAttacker->netname));
+					g_engfuncs.pfnServerPrint ("'s pain\n");
+					return;
+				}
+				if (FClassnameIs( pevVictim->dmg_inflictor, "proximity_grenade" ))
+				{
+					g_engfuncs.pfnServerPrint( STRING( pevVictim->netname ));
+
+					if (rnum)
+						g_engfuncs.pfnServerPrint (" got too friendly with ");
+					else
+						g_engfuncs.pfnServerPrint (" did the rhumba with ");
+
+					g_engfuncs.pfnServerPrint (STRING(pevAttacker->netname));
+					g_engfuncs.pfnServerPrint ("'s bomb\n");
+					return;
+				}
+
+#endif /* HIPNOTIC */
 				rnum = pAttacker->m_iWeapon;
 
 				if (rnum == IT_AXE)
@@ -894,6 +1122,22 @@ void ClientObituary( entvars_t *pevVictim, entvars_t *pevAttacker )
 					else
 						strcpy( deathstring2, "'s shaft\n" );
 				}
+#ifdef HIPNOTIC
+				if (rnum == IT_LASER_CANNON)
+				{
+					if (RANDOM_LONG( 0, 1 ))
+						strcpy( deathstring, " was toasted by " );
+					else
+						strcpy( deathstring, " was radiated by " );
+
+					strcpy(deathstring2, "'s laser\n" );
+				}
+				if (rnum == IT_MJOLNIR)
+				{
+					strcpy( deathstring, " was slammed by " );
+					strcpy( deathstring2, "'s hammer\n" );
+				}
+#endif /* HIPNOTIC */
 
 				g_engfuncs.pfnServerPrint (STRING(pevVictim->netname));
 				g_engfuncs.pfnServerPrint (deathstring);
@@ -908,6 +1152,19 @@ void ClientObituary( entvars_t *pevVictim, entvars_t *pevAttacker )
 			rnum = pevVictim->watertype;
 
 			g_engfuncs.pfnServerPrint (STRING(pevVictim->netname));
+#ifdef HIPNOTIC
+
+			CBaseEntity *pAttacker = CBaseEntity::Instance (pevAttacker);
+
+			if ( pAttacker->m_iDeathType )
+			{
+				g_engfuncs.pfnServerPrint (" ");
+				g_engfuncs.pfnServerPrint (STRING(pAttacker->m_iDeathType));
+				g_engfuncs.pfnServerPrint ("\n");
+				return;
+			}
+
+#endif /* HIPNOTIC */
 			if (rnum == CONTENTS_WATER)
 			{
 				if (RANDOM_FLOAT(0,1) < 0.5)
@@ -972,7 +1229,16 @@ void ClientObituary( entvars_t *pevVictim, entvars_t *pevAttacker )
 					g_engfuncs.pfnServerPrint (" was scragged by a Scrag\n");
 				if (FClassnameIs( pevAttacker, "monster_zombie"))
 					g_engfuncs.pfnServerPrint (" joins the Zombies\n");
+#ifndef HIPNOTIC
 
+#else /* HIPNOTIC */
+				if (FClassnameIs( pevAttacker, "monster_gremlin"))
+					g_engfuncs.pfnServerPrint (" was outsmarted by a Gremlin\n");
+				if (FClassnameIs( pevAttacker, "monster_scourge"))
+					g_engfuncs.pfnServerPrint (" was stung by a Centroid\n");
+				if (FClassnameIs( pevAttacker, "monster_armagon"))
+					g_engfuncs.pfnServerPrint (" was outgunned by Armagon\n");
+#endif /* HIPNOTIC */
 				return;
 			}
 			if (FClassnameIs( pevAttacker, "misc_explobox") || FClassnameIs( pevAttacker, "misc_explobox2"))
@@ -1024,7 +1290,11 @@ const char *GetGameDescription()
 	if ( g_pGameRules ) // this function may be called before the world has spawned, and the game rules initialized
 		return g_pGameRules->GetGameDescription();
 	else
+#ifndef HIPNOTIC
 		return "Quake";
+#else /* HIPNOTIC */
+		return "Scourge Of Armagon";
+#endif /* HIPNOTIC */
 }
 
 /*
@@ -1157,8 +1427,13 @@ int AddToFullPack( struct entity_state_s *state, int e, edict_t *ent, edict_t *h
 {
 	int					i;
 
+#ifndef HIPNOTIC
 	// any intermission entity is forced send to client
 	if (FClassnameIs( ent, "info_intermission" ))
+#else /* HIPNOTIC */
+	// any intermission or effect_finale entities is forced send to client
+	if (FClassnameIs( ent, "info_intermission" ) || FClassnameIs( ent, "info_notnull" ))
+#endif /* HIPNOTIC */
 		goto add_entity;
 
 	// don't send if flagged for NODRAW and it's not the host getting the message

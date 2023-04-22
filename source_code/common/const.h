@@ -367,6 +367,11 @@
 // short life in 0.1 s
 // 3 bytes r, g, b
 
+#ifdef HIPNOTIC
+#define TE_EXPLOSION3		32	// same as TEX_EXPLOSION but without sound and sprite
+#define TE_EXPLOSION_SPRITE		33	// only sprite from TEX_EXPLOSION
+
+#endif /* HIPNOTIC */
 #define TE_KILLBEAM			99	// kill all beams attached to entity
 // short (entity)
 
@@ -623,6 +628,9 @@
 
 // attenuation values
 #define ATTN_NONE			0
+#ifdef HIPNOTIC
+#define ATTN_ARMAGON		0.5f
+#endif /* HIPNOTIC */
 #define ATTN_NORM			(float)1
 #define ATTN_IDLE			(float)2
 #define ATTN_STATIC			(float)3
@@ -722,6 +730,9 @@ enum
 	kRenderFxGlowShell,			// Glowing Shell
 	kRenderFxClampMinScale,		// Keep this sprite from getting very small (SPRITES only!)
 	kRenderLavaDeform,
+#ifdef HIPNOTIC
+	kRenderFxExpand,
+#endif /* HIPNOTIC */
 };
 
 typedef int		func_t;

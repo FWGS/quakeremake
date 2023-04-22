@@ -69,7 +69,9 @@ void CHud :: MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 	}
 }
 
+#ifndef HIPNOTIC
 
+#endif /* ! HIPNOTIC */
 int CHud :: MsgFunc_GameMode(const char *pszName, int iSize, void *pbuf )
 {
 	BEGIN_READ( pbuf, iSize );
@@ -78,7 +80,9 @@ int CHud :: MsgFunc_GameMode(const char *pszName, int iSize, void *pbuf )
 	return 1;
 }
 
+#ifndef HIPNOTIC
 
+#endif /* ! HIPNOTIC */
 int CHud :: MsgFunc_Damage(const char *pszName, int iSize, void *pbuf )
 {
 	int	i, armor, blood;
@@ -270,6 +274,24 @@ int CHud :: MsgFunc_TempEntity( const char *pszName, int iSize, void *pbuf )
 		dl->decay = 300;
 		gEngfuncs.pfnPlaySoundByNameAtLocation( "weapons/r_exp3.wav", 1.0, pos );
 		gEngfuncs.pEfxAPI->R_ParticleExplosion2( pos, colorStart, colorLength );
+#ifdef HIPNOTIC
+		break;
+	case TE_EXPLOSION3:
+		dl = gEngfuncs.pEfxAPI->CL_AllocDlight (0);
+		dl->origin = pos;
+		dl->radius = 350;
+		dl->color.r = dl->color.g = dl->color.b = 250;
+		dl->die = gEngfuncs.GetClientTime() + 0.5;
+		dl->decay = 300;
+		gEngfuncs.pEfxAPI->R_ParticleExplosion( pos );
+		break;
+	case TE_EXPLOSION_SPRITE:
+		pTemp = gEngfuncs.pEfxAPI->R_DefaultSprite( pos, gEngfuncs.pEventAPI->EV_FindModelIndex( "sprites/s_explod.spr" ), 0 );
+		if (!pTemp) return 1;
+		pTemp->entity.curstate.effects = EF_FULLBRIGHT;
+		pTemp->entity.curstate.rendermode = kRenderTransAlpha;
+		pTemp->entity.curstate.renderamt = 255;
+#endif /* HIPNOTIC */
 		break;
 	case TE_BEAM: // grappling hook beam
 		HUD_ParseBeam( "models/beam.mdl" );

@@ -96,6 +96,15 @@ void ClientPrecache( void )
 	PRECACHE_SOUND ("weapons/lstart.wav");		//lightning start
 	PRECACHE_SOUND ("items/damage3.wav");
 
+#ifdef HIPNOTIC
+	PRECACHE_SOUND ("misc/foot1.wav");
+	PRECACHE_SOUND ("misc/foot2.wav");
+	PRECACHE_SOUND ("misc/foot3.wav");
+	PRECACHE_SOUND ("misc/foot4.wav");
+	PRECACHE_SOUND ("misc/foot5.wav");
+	PRECACHE_SOUND ("misc/foot6.wav");
+	PRECACHE_SOUND ("misc/foot7.wav");
+#endif /* HIPNOTIC */
 	PRECACHE_SOUND ("misc/power.wav");		//lightning for boss
 
 	PRECACHE_SOUND("player/swim1.wav");		// breathe bubbles
@@ -148,6 +157,31 @@ void ClientPrecache( void )
 	PRECACHE_SOUND("player/pl_wade2.wav");
 	PRECACHE_SOUND("player/pl_wade3.wav");
 	PRECACHE_SOUND("player/pl_wade4.wav");
+#ifdef HIPNOTIC
+
+	// HIPNOTIC
+	PRECACHE_SOUND ("misc/quake.wav");
+	PRECACHE_SOUND ("misc/quakeend.wav");
+	PRECACHE_SOUND ("hipitems/empathy.wav");
+	PRECACHE_SOUND ("hipitems/empathy2.wav");
+	PRECACHE_SOUND ("items/suit2.wav");
+	PRECACHE_SOUND ("misc/wetsuit.wav");
+	PRECACHE_SOUND ("misc/weton.wav");
+	PRECACHE_SOUND ("hipweap/laserg.wav");
+	PRECACHE_SOUND ("hipweap/laserric.wav");   // laser cannon ricochet
+	PRECACHE_SOUND ("hipweap/proxwarn.wav");   // proximity bomb
+	PRECACHE_SOUND ("hipweap/proxbomb.wav");   // proximity bomb
+	PRECACHE_SOUND ("hipweap/mjolhit.wav");   // mjolnir
+	PRECACHE_SOUND ("hipweap/mjolslap.wav");   // mjolnir
+	PRECACHE_SOUND ("hipweap/mjoltink.wav");   // mjolnir
+
+	// finale
+	PRECACHE_SOUND ("misc/exit01.wav");	// gman
+	PRECACHE_SOUND ("misc/exit02.wav");	// time
+	PRECACHE_SOUND( "boss2/death.wav" );
+	PRECACHE_SOUND( "ambience/rumble.wav" );
+	PRECACHE_SOUND( "boss2/pop2.wav" );
+#endif /* HIPNOTIC */
 }
 
 // called by worldspawn
@@ -168,6 +202,11 @@ void W_Precache(void)
 	PRECACHE_MODEL("models/v_rock.mdl");
 	PRECACHE_MODEL("models/v_rock2.mdl");
 	PRECACHE_MODEL("models/v_light.mdl");
+#ifdef HIPNOTIC
+	PRECACHE_MODEL("models/v_hammer.mdl");
+	PRECACHE_MODEL("models/v_laser.mdl");
+	PRECACHE_MODEL("models/v_prox.mdl");
+#endif /* HIPNOTIC */
  
 	// Weapon player models
 	PRECACHE_MODEL("models/p_crowbar.mdl");
@@ -178,11 +217,20 @@ void W_Precache(void)
 	PRECACHE_MODEL("models/p_nail2.mdl");
 	PRECACHE_MODEL("models/p_light.mdl");
 	PRECACHE_MODEL("models/p_shot.mdl");
+#ifdef HIPNOTIC
+	PRECACHE_MODEL("models/p_hammer.mdl");
+	PRECACHE_MODEL("models/p_laser.mdl");
+	PRECACHE_MODEL("models/p_prox.mdl");
+#endif /* HIPNOTIC */
 
 	// lightning
 	PRECACHE_MODEL("models/bolt.mdl");
 	PRECACHE_MODEL("models/bolt2.mdl");
 	PRECACHE_MODEL("models/bolt3.mdl");
+#ifdef HIPNOTIC
+	PRECACHE_MODEL("models/lasrspik.mdl");
+	PRECACHE_MODEL("models/proxbomb.mdl");
+#endif /* HIPNOTIC */
 
 	// used by explosions
 	PRECACHE_MODEL ("models/grenade.mdl");
@@ -193,6 +241,10 @@ void W_Precache(void)
 	PRECACHE_MODEL("models/gib1.mdl");
 	PRECACHE_MODEL("models/gib2.mdl");
 	PRECACHE_MODEL("models/gib3.mdl");
+#ifdef HIPNOTIC
+	PRECACHE_MODEL("models/h_player.mdl");
+	PRECACHE_MODEL("models/freeman.mdl");
+#endif /* HIPNOTIC */
 
 	// Weapon sounds
 	PRECACHE_SOUND("player/axhit1.wav");
@@ -314,6 +366,11 @@ TYPEDESCRIPTION CWorld::m_SaveData[] =
 	DEFINE_FIELD( CWorld, total_monsters, FIELD_INTEGER ),
 	DEFINE_FIELD( CWorld, found_secrets, FIELD_INTEGER ),
 	DEFINE_FIELD( CWorld, killed_monsters, FIELD_INTEGER ),
+#ifdef HIPNOTIC
+	DEFINE_FIELD( CWorld, num_prox_grenades, FIELD_INTEGER ),
+	DEFINE_FIELD( CWorld, total_gremlins, FIELD_INTEGER ),
+	DEFINE_FIELD( CWorld, num_spawn_gremlins, FIELD_INTEGER ),
+#endif /* HIPNOTIC */
 	DEFINE_FIELD( CWorld, levelname, FIELD_STRING ),
 }; IMPLEMENT_SAVERESTORE( CWorld, CBaseEntity );
 
@@ -325,6 +382,10 @@ void CWorld :: Precache( void )
 	// reset intermission stuff here
 	g_intermission_running = 0;
 	g_intermission_exittime = 0;
+#ifdef HIPNOTIC
+	g_intermission_sequence = 0;
+	g_intermission_seqtime = 0;
+#endif /* HIPNOTIC */
 
 	g_sNextMap[0] = '\0';
 

@@ -33,6 +33,9 @@ extern void ParmsChangeLevel( void );
 extern const char *GetGameDescription( void );
 extern void PlayerCustomization( edict_t *pEntity, customization_t *pCust );
 extern void ClientObituary( entvars_t *pevVictim, entvars_t *pevAttacker );
+#ifdef HIPNOTIC
+extern void ExitIntermission( edict_t *pEntity );
+#endif /* HIPNOTIC */
 
 extern void SpectatorConnect ( edict_t *pEntity );
 extern void SpectatorDisconnect ( edict_t *pEntity );

@@ -15,6 +15,9 @@
 #include "extdll.h"
 #include "util.h"
 #include "cbase.h"
+#ifdef HIPNOTIC
+#include "client.h"
+#endif /* HIPNOTIC */
 #include "weapons.h"
 #include "player.h"
 #include "skill.h"
@@ -400,6 +403,10 @@ void CBubbleSource :: Think( void )
 
 #define SF_SUPERSPIKE	1
 #define SF_LASER		2
+#ifdef HIPNOTIC
+#define SF_LAVABALL		4
+#define SF_ROCKET		8
+#endif /* HIPNOTIC */
 
 class CSpikeShooter : public CBaseToggle
 {
@@ -407,22 +414,54 @@ public:
 	void	Spawn( void );
 	void	Precache( void );
 	void	Think( void );
+#ifdef HIPNOTIC
+	void	KeyValue( KeyValueData *pkvd );
+#endif /* HIPNOTIC */
 	void	Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 };
 
+#ifndef HIPNOTIC
 /*QUAKED trap_shooter (0 .5 .8) (-8 -8 -8) (8 8 8) superspike laser
+#else /* HIPNOTIC */
+/*QUAKED trap_shooter (0 .5 .8) (-8 -8 -8) (8 8 8) superspike laser lavaball rocket silent
+#endif /* HIPNOTIC */
 Continuously fires spikes.
 "wait" time between spike (1.0 default)
 "nextthink" delay before firing first spike, so multiple shooters can be stagered.
 */
 LINK_ENTITY_TO_CLASS( trap_shooter, CSpikeShooter );
 
+#ifndef HIPNOTIC
 /*QUAKED trap_spikeshooter (0 .5 .8) (-8 -8 -8) (8 8 8) superspike laser
+#else /* HIPNOTIC */
+/*QUAKED trap_spikeshooter (0 .5 .8) (-8 -8 -8) (8 8 8) superspike laser lavaball rocket silent
+#endif /* HIPNOTIC */
 When triggered, fires a spike in the direction set in QuakeEd.
 Laser is only for REGISTERED.
 */
 LINK_ENTITY_TO_CLASS( trap_spikeshooter, CSpikeShooter );
 
+#ifdef HIPNOTIC
+/*QUAKED trap_switched_shooter (0 .5 .8) (-8 -8 -8) (8 8 8) superspike laser lavaball rocket silent
+Continuously fires spikes.
+"wait" time between spike (1.0 default)
+"nextthink" delay before firing first spike, so multiple shooters can be stagered.
+"state" 0 initially off, 1 initially on. (0 default)
+*/
+LINK_ENTITY_TO_CLASS( trap_switched_shooter, CSpikeShooter );
+
+void CSpikeShooter :: KeyValue( KeyValueData *pkvd )
+{
+	if (FStrEq(pkvd->szKeyName, "state"))
+	{
+		pev->button = atoi(pkvd->szValue);
+		pkvd->fHandled = TRUE;
+	}
+	else
+		CBaseToggle::KeyValue( pkvd );
+}
+
+#endif /* HIPNOTIC */
 void CSpikeShooter::Precache( void )
 {
 	if (pev->spawnflags & SF_LASER)
@@ -431,6 +470,20 @@ void CSpikeShooter::Precache( void )
 		PRECACHE_SOUND ("enforcer/enfire.wav");
 		PRECACHE_SOUND ("enforcer/enfstop.wav");
 	}
+#ifdef HIPNOTIC
+	else if (pev->spawnflags & SF_LAVABALL)
+	{
+		PRECACHE_MODEL ("models/lavarock.mdl");
+		PRECACHE_SOUND ("misc/spike.wav");
+	}
+	else if (pev->spawnflags & SF_ROCKET)
+	{
+		PRECACHE_MODEL ("models/missile.mdl");
+		PRECACHE_SOUND ("weapons/sgun1.wav");
+	}
+	else
+		PRECACHE_SOUND ("weapons/spike2.wav");
+#endif /* HIPNOTIC */
 }
 
 void CSpikeShooter::Spawn( void )
@@ -439,34 +492,88 @@ void CSpikeShooter::Spawn( void )
 
 	SetMovedir(pev);
 
+#ifndef HIPNOTIC
 	if (FClassnameIs( pev, "trap_shooter" ))
+#else /* HIPNOTIC */
+	if (FClassnameIs( pev, "trap_shooter" ) || FClassnameIs( pev, "trap_switched_shooter" ))
+#endif /* HIPNOTIC */
 	{
 		if (m_flWait == 0.0f) m_flWait = 1;
 		pev->nextthink = gpGlobals->time + m_flWait;
+#ifdef HIPNOTIC
+
+		if( FClassnameIs( pev, "trap_shooter" ))
+			pev->button = TRUE;
+#endif /* HIPNOTIC */
 	}
 }
 
 void CSpikeShooter::Think( void )
 {
+#ifndef HIPNOTIC
 	Use( this, this, USE_TOGGLE, 0 );
+#else /* HIPNOTIC */
+	if( pev->button )
+		Use( this, this, USE_TOGGLE, 0 );
+#endif /* HIPNOTIC */
 	pev->nextthink = gpGlobals->time + m_flWait;
 }
 
 void CSpikeShooter::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
+#ifdef HIPNOTIC
+	if( FClassnameIs( pev, "trap_switched_shooter" ))
+	{
+		pev->button = !pev->button;
+		return;
+	}
+
+#endif /* HIPNOTIC */
 	if (pev->spawnflags & SF_LASER)
 	{
 		CLaser *pLaser;
 
+#ifndef HIPNOTIC
 		EMIT_SOUND( edict(), CHAN_VOICE, "enforcer/enfire.wav", 1, ATTN_NORM );
+#else /* HIPNOTIC */
+		if( !FBitSet( pev->spawnflags, SF_TRAP_SILENT ))
+			EMIT_SOUND( edict(), CHAN_VOICE, "enforcer/enfire.wav", 1, ATTN_NORM );
+#endif /* HIPNOTIC */
 
 		pLaser = CLaser::LaunchLaser( pev->origin, pev->movedir, this );
 	}
+#ifdef HIPNOTIC
+	else if (pev->spawnflags & SF_LAVABALL)
+	{
+		if( !FBitSet( pev->spawnflags, SF_TRAP_SILENT ))
+			EMIT_SOUND( edict(), CHAN_VOICE, "misc/spike.wav", 1, ATTN_NORM );
+
+		CRocket *pLava = CRocket::CreateRocket( pev->origin, pev->movedir, this );
+
+		if( !pLava ) return;
+		SET_MODEL(ENT(pLava->pev), "models/lavarock.mdl" );
+		UTIL_SetSize( pLava->pev, Vector( -4, -4, -4 ), Vector( 4, 4, 4 ));
+		pLava->pev->velocity = pev->movedir * 300.0f; // set lavaball speed
+		pLava->pev->avelocity = Vector( 0, 0, 400 );
+	}
+	else if (pev->spawnflags & SF_ROCKET)
+	{
+		if( !FBitSet( pev->spawnflags, SF_TRAP_SILENT ))
+			EMIT_SOUND( edict(), CHAN_VOICE, "weapons/sgun1.wav", 1, ATTN_NORM);
+
+		CRocket::CreateRocket( pev->origin + pev->movedir * 8, pev->movedir, this );
+	}
+#endif /* HIPNOTIC */
 	else
 	{
 		CNail *pNail;
 
+#ifndef HIPNOTIC
 		EMIT_SOUND( edict(), CHAN_VOICE, "weapons/spike2.wav", 1, ATTN_NORM );
+#else /* HIPNOTIC */
+		if( !FBitSet( pev->spawnflags, SF_TRAP_SILENT ))
+			EMIT_SOUND( edict(), CHAN_VOICE, "weapons/spike2.wav", 1, ATTN_NORM );
+#endif /* HIPNOTIC */
 
 		if (pev->spawnflags & SF_SUPERSPIKE)
 			pNail = CNail::CreateSuperNail( pev->origin, pev->movedir, this );
@@ -574,4 +681,549 @@ void CEventLighting :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_T
 	{
 		pBoss->TakeDamage( pev, pActivator->pev, 1, DMG_SHOCK );
 	}	
+#ifndef HIPNOTIC
 }
+#else /* HIPNOTIC */
+}
+
+class CInfoCommand : public CBaseEntity
+{
+public:
+	void Activate( void ) { if( pev->message ) SERVER_COMMAND( (char *)STRING( pev->message )); }
+};
+
+LINK_ENTITY_TO_CLASS( info_command, CInfoCommand );
+
+/*QUAKED func_exploder (0.4 0 0) (0 0 0) (8 8 8) particles
+  Spawns an explosion when triggered.  Triggers any targets.
+
+  "dmg" specifies how much damage to cause.  Negative values
+  indicate no damage.  Default or 0 indicates 120.
+  "volume" volume at which to play explosions (default 1.0)
+  "speed" attenuation for explosions (default normal)
+*/
+class CFuncExploder : public CBaseDelay
+{
+public:
+	void Spawn( void );
+	void Precache( void );
+	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+	void EXPORT Explosion( void );
+};
+
+LINK_ENTITY_TO_CLASS( func_exploder, CFuncExploder );
+
+void CFuncExploder :: Precache( void )
+{
+	PRECACHE_SOUND( "misc/shortexp.wav" );
+	PRECACHE_SOUND( "misc/longexpl.wav" );
+}
+
+void CFuncExploder :: Spawn( void )
+{
+	Precache ();
+
+	if( pev->dmg == 0.0f )
+		pev->dmg = 120;
+	if( pev->dmg < 0.0f )
+		pev->dmg = 0;
+
+	if( pev->speed == 0.0f )
+		pev->speed = 1.0f;
+	if( m_flVolume == 0.0f )
+		m_flVolume = 1.0f;
+}
+
+void CFuncExploder :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
+{
+	m_hActivator = pActivator;
+
+	if( m_flDelay )
+	{
+		SetThink( Explosion );
+		pev->nextthink = gpGlobals->time + m_flDelay;
+		m_flDelay = 0.0f;
+	}
+	else
+	{
+		// fire immediately
+		Explosion ();
+	}
+}
+
+void CFuncExploder :: Explosion( void )
+{
+	SUB_UseTargets( m_hActivator, USE_TOGGLE, 0.0f );
+
+	if( pev->dmg < 120.0f )
+	{
+		EMIT_SOUND(ENT(pev), CHAN_AUTO, "misc/shortexp.wav", m_flVolume, pev->speed);
+	}
+	else
+	{
+		EMIT_SOUND(ENT(pev), CHAN_AUTO, "misc/longexpl.wav", m_flVolume, pev->speed);
+	}
+
+	UTIL_ScreenShake( pev->origin, 16.0f, 2.0f, 0.5f, 250.0f );
+	Q_RadiusDamage(this, m_hActivator, pev->dmg, NULL);
+
+	if( pev->spawnflags & 1 )
+	{
+		MESSAGE_BEGIN( MSG_BROADCAST, gmsgTempEntity );
+			WRITE_BYTE( TE_EXPLOSION3 );
+			WRITE_COORD( pev->origin.x );
+			WRITE_COORD( pev->origin.y );
+			WRITE_COORD( pev->origin.z );
+		MESSAGE_END();
+	}
+
+	MESSAGE_BEGIN( MSG_BROADCAST, gmsgTempEntity );
+		WRITE_BYTE( TE_EXPLOSION_SPRITE );
+		WRITE_COORD( pev->origin.x );
+		WRITE_COORD( pev->origin.y );
+		WRITE_COORD( pev->origin.z );
+	MESSAGE_END();
+
+	UTIL_Remove( this );
+}
+
+/*QUAKED func_multi_exploder (0.4 0 0) ?
+  Spawns an explosion when triggered.  Triggers any targets.
+  size of brush determines where explosions will occur.
+
+  "dmg" specifies how much damage to cause from each explosion
+  Negative values indicate no damage.  Default or 0 indicates 120.
+  "delay" delay before exploding (Default 0 seconds)
+  "duration" how long to explode for (Default 1 second)
+  "wait" time between each explosion (default 0.25 seconds)
+  "volume" volume to play explosion sound at (default 0.5)
+  "speed" attenuation for explosions (default normal)
+
+*/
+LINK_ENTITY_TO_CLASS( func_multi_exploder, CFuncMultiExploder );
+
+void CFuncMultiExploder :: KeyValue( KeyValueData *pkvd )
+{
+	if (FStrEq(pkvd->szKeyName, "duration"))
+	{
+		pev->dmgtime = atof(pkvd->szValue);
+		pkvd->fHandled = TRUE;
+	}
+	else
+		CBaseToggle::KeyValue( pkvd );
+}
+
+void CFuncMultiExploder :: Precache( void )
+{
+	PRECACHE_SOUND( "misc/shortexp.wav" );
+	PRECACHE_SOUND( "misc/longexpl.wav" );
+}
+
+void CFuncMultiExploder :: Spawn( void )
+{
+	Precache ();
+
+	// set size and link into world
+	SET_MODEL(ENT(pev), STRING(pev->model) );
+	pev->modelindex = 0;
+	pev->model = 0;
+
+	if( pev->dmg == 0.0f )
+		pev->dmg = 120;
+	if( pev->dmg < 0.0f )
+		pev->dmg = 0;
+
+	if( pev->dmgtime == 0.0f )
+		pev->dmgtime = 1.0f;
+	if( pev->speed == 0.0f )
+		pev->speed = 1.0f;
+	if( m_flVolume == 0.0f )
+		m_flVolume = 1.0f;
+	if( m_flWait == 0.0f )
+		m_flWait = 0.25f;
+
+	pev->button = FALSE;
+}
+
+void CFuncMultiExploder :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
+{
+	m_hActivator = pActivator;
+
+	if( m_flDelay )
+	{
+		SetThink( ExplosionThink );
+		pev->nextthink = gpGlobals->time + m_flDelay;
+		m_flDelay = 0.0f;
+	}
+	else
+	{
+		// fire immediately
+		SetThink( ExplosionThink );
+		ExplosionThink ();
+	}
+}
+
+void CFuncMultiExploder :: ExplosionThink( void )
+{
+	pev->nextthink = gpGlobals->time + m_flWait;
+
+	if( !pev->button )
+	{
+		pev->button = TRUE;
+		pev->dmgtime = gpGlobals->time + pev->dmgtime;
+		SUB_UseTargets( m_hActivator, USE_TOGGLE, 0.0f );
+	}
+
+	if( gpGlobals->time > pev->dmgtime )
+	{
+		UTIL_Remove( this );
+		return;
+	}
+
+	CBaseEntity *pExpl = GetClassPtr( (CPointEntity *)NULL );
+	pExpl->pev->classname = MAKE_STRING( "info_notnull" );
+	pExpl->pev->owner = pev->owner;
+	pExpl->pev->dmg = pev->dmg;
+	pExpl->pev->origin.x = pev->absmin.x + (RANDOM_FLOAT(0, 1) * (pev->absmax.x - pev->absmin.x));
+	pExpl->pev->origin.y = pev->absmin.y + (RANDOM_FLOAT(0, 1) * (pev->absmax.y - pev->absmin.y));
+	pExpl->pev->origin.z = pev->absmin.z + (RANDOM_FLOAT(0, 1) * (pev->absmax.z - pev->absmin.z));
+	EMIT_SOUND(ENT(pExpl->pev), CHAN_AUTO, "misc/shortexp.wav", m_flVolume, pev->speed);
+	UTIL_ScreenShake( pExpl->pev->origin, 16.0f, 2.0f, 0.5f, 250.0f );
+	Q_RadiusDamage(pExpl, m_hActivator, pev->dmg, NULL);
+
+	if( pev->spawnflags & 1 )
+	{
+		MESSAGE_BEGIN( MSG_BROADCAST, gmsgTempEntity );
+			WRITE_BYTE( TE_EXPLOSION3 );
+			WRITE_COORD( pExpl->pev->origin.x );
+			WRITE_COORD( pExpl->pev->origin.y );
+			WRITE_COORD( pExpl->pev->origin.z );
+		MESSAGE_END();
+	}
+
+	MESSAGE_BEGIN( MSG_BROADCAST, gmsgTempEntity );
+		WRITE_BYTE( TE_EXPLOSION_SPRITE );
+		WRITE_COORD( pExpl->pev->origin.x );
+		WRITE_COORD( pExpl->pev->origin.y );
+		WRITE_COORD( pExpl->pev->origin.z );
+	MESSAGE_END();
+
+	UTIL_Remove( pExpl );
+}
+
+void CFuncMultiExploder :: MultiExplosion( const Vector &loc, float flRad, float flDamage, float dur, float pause, float vol )
+{
+	CFuncMultiExploder *pMultiExp = GetClassPtr( (CFuncMultiExploder *)NULL );
+
+	if( !pMultiExp ) return;
+
+	pMultiExp->pev->classname = MAKE_STRING( func_multi_exploder );
+	pMultiExp->pev->origin = loc;
+	pMultiExp->pev->dmg = flDamage;
+	pMultiExp->pev->dmgtime = dur;
+	pMultiExp->m_flWait = pause;
+	pMultiExp->m_flVolume = vol;
+
+	pMultiExp->pev->absmin = pMultiExp->pev->origin - (flRad * Vector( 1, 1, 1 ));
+	pMultiExp->pev->absmax = pMultiExp->pev->origin + (flRad * Vector( 1, 1, 1 ));
+
+	pMultiExp->SetThink( &CFuncMultiExploder :: ExplosionThink );
+	pMultiExp->ExplosionThink();
+}
+
+class CRubblePiece : public CBaseEntity
+{
+public:
+	void Spawn( const char *szGibModel );
+	void Touch( CBaseEntity *pOther );
+	static void ThrowRubble( const char *szGibName, const Vector &vecOrigin );
+};
+
+LINK_ENTITY_TO_CLASS( rubble, CRubblePiece );
+
+void CRubblePiece :: ThrowRubble( const char *szGibName, const Vector &vecOrigin )
+{
+	CRubblePiece *pRubble = GetClassPtr( (CRubblePiece *)NULL );
+
+	pRubble->Spawn( szGibName );
+	pRubble->pev->origin = vecOrigin;
+	pRubble->pev->classname = MAKE_STRING( "rubble" );
+}
+
+void CRubblePiece :: Spawn( const char *szGibModel )
+{
+	SET_MODEL(ENT(pev), szGibModel);
+	UTIL_SetSize (pev, g_vecZero, g_vecZero);
+
+	pev->movetype = MOVETYPE_BOUNCE;
+	pev->solid = SOLID_BBOX;
+
+	pev->velocity.x = RANDOM_FLOAT( -70, 70 );
+	pev->velocity.y = RANDOM_FLOAT( -70, 70 );
+	pev->velocity.z = RANDOM_FLOAT( 0, 210 );
+	pev->avelocity.x = RANDOM_FLOAT( 0, 600 );
+	pev->avelocity.y = RANDOM_FLOAT( 0, 600 );
+	pev->avelocity.z = RANDOM_FLOAT( 0, 600 );
+
+	SetThink( SUB_Remove );
+
+	pev->nextthink = gpGlobals->time + RANDOM_FLOAT( 23.0f, 32.0f );
+	pev->dmgtime = gpGlobals->time;
+}
+
+void CRubblePiece :: Touch( CBaseEntity *pOther )
+{
+	if( gpGlobals->time < pev->dmgtime )
+		return;
+	   
+	if( pOther->pev->takedamage )
+	{
+		pOther->TakeDamage( pev, pev, 10, DMG_GENERIC );
+		EMIT_SOUND(ENT(pev), CHAN_WEAPON, "zombie/z_hit.wav", 1, ATTN_NORM);
+		pev->dmgtime = gpGlobals->time + 0.1;
+	}
+}
+
+class CFuncRubble : public CBaseEntity
+{
+public:
+	void Spawn( void );
+	void Precache( void );
+	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+};
+
+/*QUAKED func_rubble (0.4 0.4 0.2) (0 0 0) (32 32 32)
+  Spawns random sized rubble when triggered.  
+  
+  "count" is the number of pieces of rubble to spawn.  Default is 1.
+*/
+LINK_ENTITY_TO_CLASS( func_rubble, CFuncRubble );
+
+/*QUAKED func_rubble1 (0.4 0.4 0.2) (0 0 0) (8 8 8)
+  Spawns small rubble when triggered.  
+  
+  "count" is the number of pieces of rubble to spawn.  Default is 1.
+*/
+LINK_ENTITY_TO_CLASS( func_rubble1, CFuncRubble );
+
+/*QUAKED func_rubble2 (0.4 0.4 0.2) (0 0 0) (16 16 16)
+  Spawns medium rubble when triggered.  
+  
+  "count" is the number of pieces of rubble to spawn.  Default is 1.
+*/
+LINK_ENTITY_TO_CLASS( func_rubble2, CFuncRubble );
+
+/*QUAKED func_rubble3 (0.4 0.4 0.2) (0 0 0) (32 32 32)
+  Spawns large rubble when triggered.  
+  
+  "count" is the number of pieces of rubble to spawn.  Default is 1.
+*/
+LINK_ENTITY_TO_CLASS( func_rubble3, CFuncRubble );
+
+void CFuncRubble :: Precache( void )
+{
+	PRECACHE_MODEL ("models/rubble1.mdl");
+	PRECACHE_MODEL ("models/rubble2.mdl");
+	PRECACHE_MODEL ("models/rubble3.mdl");
+	PRECACHE_SOUND ("zombie/z_hit.wav");
+}
+
+void CFuncRubble :: Spawn( void )
+{
+	Precache ();
+
+	if( FClassnameIs( pev, "func_rubble" ))
+		m_flCnt = 0.0f;
+	else if( FClassnameIs( pev, "func_rubble1" ))
+		m_flCnt = 1.0f;
+	else if( FClassnameIs( pev, "func_rubble2" ))
+		m_flCnt = 2.0f;
+	else if( FClassnameIs( pev, "func_rubble3" ))
+		m_flCnt = 3.0f;
+}
+
+void CFuncRubble :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
+{
+	int index = 0;
+	
+	do 
+	{
+		int which = m_flCnt;
+
+		if( m_flCnt == 0.0f )
+			which = RANDOM_FLOAT( 1, 3 );
+
+		switch( which )
+		{
+		case 1: CRubblePiece::ThrowRubble( "models/rubble1.mdl", pev->origin ); break;
+		case 2: CRubblePiece::ThrowRubble( "models/rubble3.mdl", pev->origin ); break;
+		default: CRubblePiece::ThrowRubble("models/rubble2.mdl", pev->origin ); break;
+		}
+	} while( ++index < m_flCount );
+}
+
+/*QUAKED func_earthquake (0 0 0.5) (0 0 0) (32 32 32)
+Causes an earthquake.  Triggers targets.
+
+"dmg" is the duration of the earthquake.  Default is 0.8 seconds.
+*/
+class CFuncEarthQuake : public CBaseEntity
+{
+public:
+	void	Spawn( void );
+	void	Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+};
+
+LINK_ENTITY_TO_CLASS( func_earthquake, CFuncEarthQuake );
+
+void CFuncEarthQuake :: Spawn( void )
+{
+	if( !pev->dmg ) pev->dmg = 0.8f;
+}
+
+void CFuncEarthQuake :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
+{
+	CBasePlayer *pPlayer = (CBasePlayer *)UTIL_PlayerByIndex( 1 );
+	value = gpGlobals->time + pev->dmg;
+
+	if( value > pPlayer->m_flEarthQuakeTime )
+		pPlayer->m_flEarthQuakeTime = value;
+}
+
+/*QUAKED info_startendtext (0.3 0.1 0.6) (-8 -8 -8) (8 8 8)
+ start the end text
+*/
+
+class CStartEndText : public CBaseEntity
+{
+public:
+	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+};
+LINK_ENTITY_TO_CLASS( info_startendtext, CStartEndText );
+
+void CStartEndText::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
+{
+	g_intermission_running = 1;
+	ExitIntermission (INDEXENT( 1 ));
+}
+
+/*QUAKED effect_teleport (0.3 0.1 0.6) (-8 -8 -8) (8 8 8)
+ Create a teleport effect when triggered
+*/
+class CTeleportEffect : public CBaseEntity
+{
+public:
+	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+};
+LINK_ENTITY_TO_CLASS( effect_teleport, CTeleportEffect );
+
+void CTeleportEffect::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
+{
+	CTeleFog::CreateFog( pev->origin );
+}
+
+
+/*QUAKED effect_finale (0.3 0.1 0.6) (-8 -8 -8) (8 8 8) useplayer nodecoy
+ start the finale sequence
+ "target" the camera to go to.
+ "mdl" if useplayer is specified, this is a
+ path corner with target of the next
+ path_corner to run to.
+ if use player isn't specified this becomes
+ the spawn point as well.
+ "spawnfunction" next routine to run
+ "delay" time to wait until running routine
+ useplayer - use the current player as
+             decoy location.
+ nodecoy - no decoy, only the camera
+*/
+class CFinaleEffect : public CBaseEntity
+{
+public:
+	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+	void KeyValue( KeyValueData *pkvd );
+	void BecomeDecoy( string_t target, const Vector &origin );
+};
+
+LINK_ENTITY_TO_CLASS( effect_finale, CFinaleEffect );
+
+// Sets toucher's friction to m_frictionFraction (1.0 = normal friction)
+void CFinaleEffect :: KeyValue( KeyValueData *pkvd )
+{
+	if (FStrEq(pkvd->szKeyName, "mangle"))	// a quake alias
+	{
+		UTIL_StringToVector( (float *)pev->angles, pkvd->szValue );
+		pkvd->fHandled = TRUE;
+	}
+	else if (FStrEq(pkvd->szKeyName, "mdl"))
+	{
+		pev->netname = ALLOC_STRING( pkvd->szValue );
+		pkvd->fHandled = TRUE;
+	}
+	else
+		CBaseEntity::KeyValue( pkvd );
+}
+
+void CFinaleEffect :: BecomeDecoy( string_t target, const Vector &origin )
+{
+	CBaseEntity *pDecoy;
+
+	pDecoy = CBaseEntity :: Create( "monster_decoy", origin, g_vecZero );
+	pDecoy->pev->target = target;	// copy path_corner name
+}
+
+void CFinaleEffect :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
+{
+	CBaseEntity *pPlayer;
+
+	if (pev->button) return;
+
+	pev->button = TRUE;
+
+	// find the intermission spot
+	CBaseEntity *pTarget = UTIL_FindEntityByTargetname( NULL, STRING( pev->target ));
+
+	if (!pTarget)
+	{
+		ALERT( at_error, "no target in finale!\n" );
+		return;
+	}
+
+	//setup decoy
+	if (!FBitSet( pev->spawnflags, 2 ))
+	{
+		CBaseEntity *pPath = UTIL_FindEntityByTargetname( NULL, STRING( pev->netname ));
+
+		if (!pPath)
+		{
+			ALERT( at_error, "no path target while spawnflags 2 is not set!\n" );
+			return;
+		}
+
+		if (FBitSet(pev->spawnflags, 1))
+		{
+			pPlayer = UTIL_PlayerByIndex (1);
+			BecomeDecoy( pPath->pev->target, pPlayer->pev->origin );
+		}
+		else
+		{
+			BecomeDecoy( pPath->pev->target, pPath->pev->origin );
+		}
+	}
+
+	for (int i = 1; i <= gpGlobals->maxClients; i++)
+	{
+		pPlayer = UTIL_PlayerByIndex (i);
+
+		SET_VIEW( pPlayer->edict(), pTarget->edict() );
+		pPlayer->pev->takedamage = DAMAGE_NO;
+		pPlayer->pev->solid = SOLID_NOT;
+		pPlayer->pev->movetype = MOVETYPE_NONE;
+		pPlayer->pev->modelindex = 0;
+		pPlayer->pev->v_angle = pTarget->pev->angles;
+		pPlayer->pev->fixangle = TRUE;
+		pPlayer->m_iItems = 0;
+		UTIL_SetOrigin( pPlayer->pev, pTarget->pev->origin );
+	}
+}
+#endif /* HIPNOTIC */

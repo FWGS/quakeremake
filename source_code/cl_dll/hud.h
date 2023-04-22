@@ -140,6 +140,13 @@ private:
 
 	char	levelname[80];
 	float	completed_time;
+#ifdef HIPNOTIC
+
+	// hipnotic items
+	int	hsb_weapons[7][5];
+	int	hsb_items[2];
+	int	hipweapons[4];
+#endif /* HIPNOTIC */
 };
 
 //

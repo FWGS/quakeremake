@@ -892,6 +892,40 @@ float UTIL_AngleDistance( float next, float cur )
 	return delta;
 }
 
+#ifdef HIPNOTIC
+void UTIL_NormalizeAngles( Vector &ang )
+{
+	while( ang.x > 360.0f )
+	{
+		ang.x = ang.x - 360.0f;
+	}
+
+	while( ang.x < 0.0f )
+	{
+		ang.x = ang.x + 360.0f;
+	}
+
+	while( ang.y > 360.0f )
+	{
+		ang.y = ang.y - 360.0f;
+	}
+
+	while( ang.y < 0.0f )
+	{
+		ang.y = ang.y + 360.0f;
+	}
+
+	while( ang.z > 360.0f )
+	{
+		ang.z = ang.z - 360.0f;
+	}
+
+	while( ang.z < 0.0f )
+	{
+		ang.z = ang.z + 360.0f;
+	}
+}
+#endif /* HIPNOTIC */
 
 float UTIL_SplineFraction( float value, float scale )
 {

@@ -15,7 +15,11 @@ GNU General Public License for more details.
 
 #include <windows.h>
 
+#ifndef HIPNOTIC
 #define GAME_PATH	"id1"	// default dir to start from
+#else /* HIPNOTIC */
+#define GAME_PATH	"hipnotic"	// default dir to start from
+#endif /* HIPNOTIC */
 
 #ifdef WIN32
 // enable NVIDIA High Performance Graphics while using Integrated Graphics.

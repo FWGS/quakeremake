@@ -167,4 +167,276 @@ public:
 	void Spawn( void ) { Precache(); }
 };
 
+#ifndef HIPNOTIC
 LINK_ENTITY_TO_CLASS( ambient_swamp2, CAmbientSwamp2 );
+#else /* HIPNOTIC */
+LINK_ENTITY_TO_CLASS( ambient_swamp2, CAmbientSwamp2 );
+
+/*QUAKED ambient_humming (0.3 0.1 0.6) (-10 -10 -8) (10 10 8)
+  "volume" how loud it should be (0.5 is default)
+*/
+class CAmbientHumming : public CBaseEntity
+{
+public:
+	void Precache( void )
+	{
+		if( !m_flVolume ) m_flVolume = 0.5f;
+		PRECACHE_SOUND( "ambient/humming.wav" );
+		UTIL_EmitAmbientSound( ENT(pev), pev->origin, "ambient/humming.wav", m_flVolume, ATTN_STATIC, SND_SPAWNING, 100 );
+	}
+	void Spawn( void ) { Precache(); }
+};
+
+LINK_ENTITY_TO_CLASS( ambient_humming, CAmbientHumming );
+
+/*QUAKED ambient_rushing (0.3 0.1 0.6) (-10 -10 -8) (10 10 8)
+  "volume" how loud it should be (0.5 is default)
+*/
+class CAmbientRushing : public CBaseEntity
+{
+public:
+	void Precache( void )
+	{
+		if( !m_flVolume ) m_flVolume = 0.5f;
+		PRECACHE_SOUND( "ambient/rushing.wav" );
+		UTIL_EmitAmbientSound( ENT(pev), pev->origin, "ambient/rushing.wav", m_flVolume, ATTN_STATIC, SND_SPAWNING, 100 );
+	}
+	void Spawn( void ) { Precache(); }
+};
+
+LINK_ENTITY_TO_CLASS( ambient_rushing, CAmbientRushing );
+
+/*QUAKED ambient_running_water (0.3 0.1 0.6) (-10 -10 -8) (10 10 8)
+  "volume" how loud it should be (0.5 is default)
+*/
+class CAmbientRunningWater : public CBaseEntity
+{
+public:
+	void Precache( void )
+	{
+		if( !m_flVolume ) m_flVolume = 0.5f;
+		PRECACHE_SOUND( "ambient/runwater.wav" );
+		UTIL_EmitAmbientSound( ENT(pev), pev->origin, "ambient/runwater.wav", m_flVolume, ATTN_STATIC, SND_SPAWNING, 100 );
+	}
+	void Spawn( void ) { Precache(); }
+};
+
+LINK_ENTITY_TO_CLASS( ambient_running_water, CAmbientRunningWater );
+
+/*QUAKED ambient_fan_blowing (0.3 0.1 0.6) (-10 -10 -8) (10 10 8)
+  "volume" how loud it should be (0.5 is default)
+*/
+class CAmbientFanBlowing : public CBaseEntity
+{
+public:
+	void Precache( void )
+	{
+		if( !m_flVolume ) m_flVolume = 0.5f;
+		PRECACHE_SOUND( "ambient/fanblow.wav" );
+		UTIL_EmitAmbientSound( ENT(pev), pev->origin, "ambient/fanblow.wav", m_flVolume, ATTN_STATIC, SND_SPAWNING, 100 );
+	}
+	void Spawn( void ) { Precache(); }
+};
+
+LINK_ENTITY_TO_CLASS( ambient_fan_blowing, CAmbientFanBlowing );
+
+/*QUAKED ambient_waterfall (0.3 0.1 0.6) (-10 -10 -8) (10 10 8)
+  "volume" how loud it should be (0.5 is default)
+*/
+class CAmbientWaterfall : public CBaseEntity
+{
+public:
+	void Precache( void )
+	{
+		if( !m_flVolume ) m_flVolume = 0.5f;
+		PRECACHE_SOUND( "ambient/waterfal.wav" );
+		UTIL_EmitAmbientSound( ENT(pev), pev->origin, "ambient/waterfal.wav", m_flVolume, ATTN_STATIC, SND_SPAWNING, 100 );
+	}
+	void Spawn( void ) { Precache(); }
+};
+
+LINK_ENTITY_TO_CLASS( ambient_waterfall, CAmbientWaterfall );
+
+/*QUAKED ambient_riftpower (0.3 0.1 0.6) (-10 -10 -8) (10 10 8)
+  "volume" how loud it should be (0.5 is default)
+*/
+class CAmbientRiftPower : public CBaseEntity
+{
+public:
+	void Precache( void )
+	{
+		if( !m_flVolume ) m_flVolume = 0.5f;
+		PRECACHE_SOUND( "ambient/riftpowr.wav" );
+		UTIL_EmitAmbientSound( ENT(pev), pev->origin, "ambient/riftpowr.wav", m_flVolume, ATTN_STATIC, SND_SPAWNING, 100 );
+	}
+	void Spawn( void ) { Precache(); }
+};
+
+LINK_ENTITY_TO_CLASS( ambient_riftpower, CAmbientRiftPower );
+
+class CPlaySoundBase : public CBaseToggle
+{
+public:
+	void Precache( void );
+	void EXPORT PlaySoundUse( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+	void EXPORT PlaySoundThink( void );
+};
+
+void CPlaySoundBase :: Precache( void )
+{
+	PRECACHE_SOUND( (char *)STRING( pev->noise ));
+}
+
+void CPlaySoundBase :: PlaySoundUse( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
+{
+	if( pev->spawnflags & 1 )
+	{
+		if( pev->button )
+		{
+			pev->button = 1;
+			EMIT_SOUND(ENT(pev), pev->impulse, STRING(pev->noise), m_flVolume, pev->speed);
+		}
+		else
+		{
+			pev->button = 0;
+			STOP_SOUND(ENT(pev), pev->impulse, (char*)STRING(pev->noise));
+		}
+	}
+	else
+	{
+		EMIT_SOUND(ENT(pev), pev->impulse, STRING(pev->noise), m_flVolume, pev->speed);
+	}
+}
+
+void CPlaySoundBase :: PlaySoundThink( void )
+{
+	float t = m_flWait * RANDOM_FLOAT( 0.0f, 1.0f );
+	if( t < m_flDelay ) t = m_flDelay;
+
+	pev->nextthink = gpGlobals->time + t;
+	PlaySoundUse( this, this, USE_TOGGLE, 0.0f );
+}
+
+/*QUAKED play_sound_triggered (0.3 0.1 0.6) (-8 -8 -8) (8 8 8) toggle
+play a sound when it is used
+"toggle" determines whether sound should be stopped when triggered again
+"volume" how loud (1 default full volume)
+"noise" sound to play
+"impulse" channel on which to play sound (0-7) (0 automatic is default)
+"speed" attenuation factor
+   -1 - no attenuation
+    1 - normal
+    2 - idle
+    3 - static
+*/
+/*QUAKED random_thunder_triggered (0.3 0.1 0.6) (-10 -10 -8) (10 10 8) toggle
+"toggle" determines whether sound should be stopped when triggered again
+"volume" how loud (1 default full volume)
+"speed" attenuation factor
+   -1 - no attenuation
+    1 - normal
+    2 - idle
+    3 - static
+*/
+class CPlaySoundTriggered : public CPlaySoundBase
+{
+public:
+	void Spawn( void );
+};
+
+LINK_ENTITY_TO_CLASS( play_sound_triggered, CPlaySoundTriggered );
+LINK_ENTITY_TO_CLASS( random_thunder_triggered, CPlaySoundTriggered );
+
+void CPlaySoundTriggered :: Spawn( void )
+{
+	if( m_flVolume == 0.0f )
+		m_flVolume = 1.0f;
+	if( pev->speed == 0 )
+		pev->speed = 1.0f;
+	if( pev->speed == -1 )
+		pev->speed = 0;
+
+	if( pev->spawnflags & 1 )
+	{
+		if( !pev->impulse )
+			pev->impulse = CHAN_AUTO;
+          }
+
+	if( FClassnameIs( pev, "random_thunder_triggered" ))
+	{
+		pev->noise = MAKE_STRING( "ambience/thunder1.wav" );
+		pev->impulse = CHAN_BODY;
+	}
+
+	Precache ();
+	SetUse( PlaySoundUse );
+}
+
+/*QUAKED play_sound (0.3 0.1 0.6) (-8 -8 -8) (8 8 8)
+play a sound on a periodic basis
+"volume" how loud (1 default full volume)
+"noise" sound to play
+"wait" random time between sounds (default 20)
+"delay" minimum delay between sounds (default 2)
+"impulse" channel on which to play sound (0-7) (0 automatic is default)
+"speed" attenuation factor
+   -1 - no attenuation
+    1 - normal
+    2 - idle
+    3 - static
+*/
+/*QUAKED random_thunder (0.3 0.1 0.6) (-10 -10 -8) (10 10 8)
+"wait" random time between strikes (default 20)
+"delay" minimum delay between strikes (default 2)
+"volume" how loud (1 default full volume)
+"speed" attenuation factor
+   -1 - no attenuation
+    1 - normal
+    2 - idle
+    3 - static
+*/
+class CPlaySound : public CPlaySoundBase
+{
+public:
+	void Spawn( void );
+};
+
+LINK_ENTITY_TO_CLASS( play_sound, CPlaySound );
+LINK_ENTITY_TO_CLASS( random_thunder, CPlaySound );
+
+void CPlaySound :: Spawn( void )
+{
+	if( m_flVolume == 0.0f )
+		m_flVolume = 1.0f;
+	if( pev->speed == 0 )
+		pev->speed = 1.0f;
+	if( pev->speed == -1 )
+		pev->speed = 0;
+
+	if( pev->spawnflags & 1 )
+	{
+		if( !pev->impulse )
+			pev->impulse = CHAN_AUTO;
+          }
+
+	if( !m_flWait )
+		m_flWait = 20.0f;
+
+	if( !m_flDelay )
+		m_flDelay = 2.0f;
+
+	if( FClassnameIs( pev, "random_thunder" ))
+	{
+		pev->noise = MAKE_STRING( "ambience/thunder1.wav" );
+		pev->impulse = CHAN_BODY;
+	}
+
+	Precache ();
+	SetThink( PlaySoundThink );
+
+	float t = m_flWait * RANDOM_FLOAT( 0.0f, 1.0f );
+	if( t < m_flDelay ) t = m_flDelay;
+
+	pev->nextthink = gpGlobals->time + t;
+}
+#endif /* HIPNOTIC */

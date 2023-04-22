@@ -388,7 +388,7 @@ void CBasePlayer::Killed( entvars_t *pevAttacker, int iGib )
 	pev->angles.x = 0;
 	pev->angles.z = 0;
 
-	SetThink(PlayerDeathThink);
+	SetThink( &CBasePlayer::PlayerDeathThink );
 	pev->nextthink = gpGlobals->time + 0.1;
 }
 
@@ -2049,7 +2049,7 @@ void CBasePlayer :: UpdateClientData( void )
 
 	if (pev->health != m_iClientHealth)
 	{
-		int iHealth = max( pev->health, 0 );  // make sure that no negative health values are sent
+		int iHealth = Q_max( pev->health, 0 );  // make sure that no negative health values are sent
 
 		MESSAGE_BEGIN( MSG_ONE, gmsgStats, NULL, pev );
 			WRITE_BYTE( STAT_HEALTH );

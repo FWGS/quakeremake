@@ -122,12 +122,12 @@ void CFuncPartField :: Spawn( void )
 	{
 		if( m_vecDest.y > m_vecDest.z )
 		{
-			SetUse( FieldXY );
+			SetUse( &CFuncPartField::FieldXY );
 			m_vecDest1.z = ( m_vecDest1.z + m_vecDest2.z ) / 2;
 		}
 		else
 		{
-			SetUse( FieldXZ );
+			SetUse( &CFuncPartField::FieldXZ );
 			m_vecDest1.y = ( m_vecDest1.y + m_vecDest2.y ) / 2;
 		}
 	}
@@ -135,12 +135,12 @@ void CFuncPartField :: Spawn( void )
 	{
 		if( m_vecDest.y > m_vecDest.x )
 		{
-			SetUse( FieldYZ );
+			SetUse( &CFuncPartField::FieldYZ );
 			m_vecDest1.x = ( m_vecDest1.x + m_vecDest2.x ) / 2;
 		}
 		else
 		{
-			SetUse( FieldXZ );
+			SetUse( &CFuncPartField::FieldXZ );
 			m_vecDest1.y = ( m_vecDest1.y + m_vecDest2.y ) / 2;
 		}
 	}
@@ -314,13 +314,13 @@ void CFuncCounter :: Spawn( void )
 	m_flCnt = 0;
 	pev->dmg = 0;
 
-	SetUse( CounterOff );
+	SetUse( &CFuncCounter::CounterOff );
 
 	if( pev->spawnflags & SF_COUNTER_START_ON )
 	{
 		// g-cont. for auto start activator will be himself
 		// and condition "pActivator->GetCount()" works fine
-		SetThink( SUB_CallUseToggle );
+		SetThink( &CBaseEntity::SUB_CallUseToggle );
 		pev->nextthink = gpGlobals->time + 0.1f;
 	}
 }
@@ -335,7 +335,7 @@ void CFuncCounter :: CounterOn( CBaseEntity *pActivator, CBaseEntity *pCaller, U
 		return;
 	}
 
-	SetUse( CounterOff );
+	SetUse( &CFuncCounter::CounterOff );
 	pev->button = FALSE;
 	SetThink( NULL );
 }
@@ -347,7 +347,7 @@ void CFuncCounter :: CounterOff( CBaseEntity *pActivator, CBaseEntity *pCaller, 
 
 	if( pev->spawnflags & SF_COUNTER_TOGGLE )
 	{
-		SetUse( CounterOn );
+		SetUse( &CFuncCounter::CounterOn );
 	}
 	else
 	{
@@ -360,7 +360,7 @@ void CFuncCounter :: CounterOff( CBaseEntity *pActivator, CBaseEntity *pCaller, 
 		pev->dmg = 0.0f;
 	}
 
-	SetThink( CounterThink );
+	SetThink( &CFuncCounter::CounterThink );
 
 	if( m_flDelay )
 	{

@@ -148,7 +148,7 @@ void CTarBaby :: MonsterAttack( void )
 void CTarBaby :: MonsterBounce( void )
 {
 	pev->movetype = MOVETYPE_BOUNCE;
-	SetTouch( JumpTouch );
+	SetTouch( &CTarBaby::JumpTouch );
 
 	UTIL_MakeVectors(pev->angles);
 
@@ -225,7 +225,7 @@ void CTarBaby :: TarExplosion( void )
 
 void CTarBaby :: MonsterKilled( entvars_t *pevAttacker, int iGib )
 {
-	SetThink( TarExplosion );
+	SetThink( &CTarBaby::TarExplosion );
 	pev->nextthink = gpGlobals->time + 0.2f;
 	pev->renderfx = kRenderFxExplode;
 }

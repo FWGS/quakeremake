@@ -20,7 +20,10 @@ def configure(conf):
 			conf.fatal("Could not find progs.def")
 
 def build(bld):
-	source = bld.path.ant_glob('**/*.cpp')
+	source = bld.path.ant_glob('*.cpp')
+	if bld.env.HIPNOTIC:
+		source += bld.path.ant_glob('hipnotic/*.cpp')
+
 	source += bld.path.parent.ant_glob('pm_shared/*.c')
 	defines = []
 	includes = [

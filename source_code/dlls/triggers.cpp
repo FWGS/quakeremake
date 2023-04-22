@@ -89,9 +89,7 @@ Variable sized repeatable trigger.  Must be targeted at one or more entities.
 If "health" is set, the trigger must be killed to activate each time.
 If "delay" is set, the trigger waits some time after activating before firing.
 "wait" : Seconds between triggerings. (.2 default)
-#ifdef HIPNOTIC
-"cnt" how many times it can be triggered (infinite default)
-#endif /* HIPNOTIC */
+"cnt" how many times it can be triggered (infinite default) (hipnotic only)
 If notouch is set, the trigger is only fired by other entities, not by touching.
 NOTOUCH has been obsoleted by trigger_relay!
 sounds
@@ -168,7 +166,7 @@ void CTriggerMultiple :: Spawn( void )
 	}
 	else if (!FBitSet(pev->spawnflags, SF_TRIGGER_NOTOUCH))
 	{
-		SetTouch( MultiTouch );
+		SetTouch( &CTriggerMultiple::MultiTouch );
 	}
 }
 
@@ -210,7 +208,7 @@ void CTriggerMultiple :: ActivateMultiTrigger( CBaseEntity *pActivator )
 
 	if (m_flWait > 0)
 	{
-		SetThink( MultiWaitOver );
+		SetThink( &CTriggerMultiple::MultiWaitOver );
 		pev->nextthink = gpGlobals->time + m_flWait;
 	}
 	else
@@ -219,7 +217,7 @@ void CTriggerMultiple :: ActivateMultiTrigger( CBaseEntity *pActivator )
 		// called while C code is looping through area links...
 		SetTouch( NULL );
 		pev->nextthink = gpGlobals->time + 0.1;
-		SetThink(  SUB_Remove );
+		SetThink(  &CBaseEntity::SUB_Remove );
 	}
 #ifdef HIPNOTIC
 
@@ -230,7 +228,7 @@ void CTriggerMultiple :: ActivateMultiTrigger( CBaseEntity *pActivator )
 		{
 			SetTouch( NULL );
 			pev->nextthink = gpGlobals->time + 0.1;
-			SetThink(  SUB_Remove );
+			SetThink(  &CBaseEntity::SUB_Remove );
 		}
 	}
 #endif /* HIPNOTIC */
@@ -483,7 +481,7 @@ void CTeleFrag::CreateTDeath( const Vector pos, const CBaseEntity *pOwner )
 	UTIL_SetSize( pTDeath->pev, pOwner->pev->mins - Vector( 1, 1, 1 ), pOwner->pev->maxs + Vector( 1, 1, 1 ));
 	UTIL_SetOrigin( pTDeath->pev, pos );
 	pTDeath->pev->nextthink = gpGlobals->time + 0.2;
-	pTDeath->SetThink( SUB_Remove );
+	pTDeath->SetThink( &CBaseEntity::SUB_Remove );
 	pTDeath->pev->owner = ENT( pOwner->pev );
 
 	gpGlobals->force_retouch++;	// make sure even still objects get hit
@@ -592,7 +590,7 @@ void CTriggerTeleport :: Touch( CBaseEntity *pOther )
 		SetTouch( NULL );
 		ALERT( at_error, "trigger_teleport: couldn't find target!\n" );
 		pev->nextthink = gpGlobals->time + 0.1;
-		SetThink(  SUB_Remove );
+		SetThink(  &CBaseEntity::SUB_Remove );
 		return;	
 	}
 
@@ -724,7 +722,7 @@ void CTriggerOnlyRegistered::Touch( CBaseEntity *pOther )
 
 		SetTouch( NULL );
 		pev->nextthink = gpGlobals->time + 0.1;
-		SetThink(  SUB_Remove );
+		SetThink(  &CBaseEntity::SUB_Remove );
 	}
 	else
 	{
@@ -740,9 +738,7 @@ void CTriggerOnlyRegistered::Touch( CBaseEntity *pOther )
 Any object touching this will be hurt
 set dmg to damage amount
 defalt dmg = 5
-#ifdef HIPNOTIC
-"cnt" default infinite, how many times to trigger
-#endif /* HIPNOTIC */
+"cnt" default infinite, how many times to trigger (hipnotic only)
 */
 class CTriggerHurt : public CBaseTrigger
 {
@@ -847,7 +843,7 @@ void CTriggerHurt :: HurtTouch( CBaseEntity *pOther )
 		{
 			SetTouch( NULL );
 			pev->nextthink = gpGlobals->time + 0.1;
-			SetThink(  SUB_Remove );
+			SetThink(  &CBaseEntity::SUB_Remove );
 		}
 	}
 #endif /* HIPNOTIC */
@@ -910,9 +906,7 @@ void CTriggerPush :: Touch( CBaseEntity *pOther )
 Walking monsters that touch this will jump in the direction of the trigger's angle
 "speed" default to 200, the speed thrown forward
 "height" default to 200, the speed thrown upwards
-#ifdef HIPNOTIC
-"cnt" default infinite, how many times to trigger
-#endif /* HIPNOTIC */
+"cnt" default infinite, how many times to trigger (hipnotic only)
 */
 class CTriggerMonsterJump : public CBaseTrigger
 {
@@ -986,7 +980,7 @@ void CTriggerMonsterJump :: JumpTouch( CBaseEntity *pOther )
 		{
 			SetTouch( NULL );
 			pev->nextthink = gpGlobals->time + 0.1;
-			SetThink(  SUB_Remove );
+			SetThink(  &CBaseEntity::SUB_Remove );
 		}
 	}
 #endif /* HIPNOTIC */
@@ -1028,7 +1022,7 @@ void CChangeLevel :: Spawn( void )
 		ALERT( at_console, "a trigger_changelevel doesn't have a map" );
 
 	InitTrigger();
-	SetTouch( TouchChangeLevel );
+	SetTouch( &CChangeLevel::TouchChangeLevel );
 }
 
 void CChangeLevel :: TouchChangeLevel( CBaseEntity *pOther )
@@ -1066,7 +1060,7 @@ void CChangeLevel :: TouchChangeLevel( CBaseEntity *pOther )
 		return;
 	}
 
-	SetThink( ExecuteChangeLevel );
+	SetThink( &CChangeLevel::ExecuteChangeLevel );
 	pev->nextthink = gpGlobals->time + 0.1;
 }
 /*
@@ -1142,9 +1136,9 @@ void CChangeLevel :: ChangeLevelNow( CBaseEntity *pActivator )
 {
 	ALERT( at_console, "CHANGE LEVEL: %s\n", g_sNextMap );
 	CHANGE_LEVEL( g_sNextMap, NULL );
-#ifdef HIPNOTIC
 }
 
+#ifdef HIPNOTIC
 /*QUAKED trigger_damagethreshold (0 .5 .8) ? MULTI_USE INVISIBLE
 Triggers only when a threshold of damage is exceeded.
 When used in conjunction with func_breakawaywall, allows
@@ -1288,8 +1282,8 @@ void CTriggerUseKey :: Spawn( void )
 		pev->team = IT_KEY2;
 	else pev->team = IT_KEY1;
 
-	SetTouch( TouchKey );
-	SetUse( UseKey );
+	SetTouch( &CTriggerUseKey::TouchKey );
+	SetUse( &CTriggerUseKey::UseKey );
 
 	InitTrigger ();
 }
@@ -1363,7 +1357,7 @@ void CTriggerUseKey :: TouchKey( CBaseEntity *pOther )
 
 	// we can't just remove (self) here, because this is a touch function
 	// called while C code is looping through area links...
-	SetThink( SUB_Remove );
+	SetThink( &CBaseEntity::SUB_Remove );
 	pev->nextthink = gpGlobals->time + 0.1f;
 	pev->message = iStringNull;
 
@@ -1463,7 +1457,7 @@ void CTriggerDecoy :: Spawn ( void )
 	}
 
 	InitTrigger ();
-	SetTouch( DecoyTouch );
+	SetTouch( &CTriggerDecoy::DecoyTouch );
 }
 
 void CTriggerDecoy :: DecoyTouch( CBaseEntity *pOther )
@@ -1472,7 +1466,7 @@ void CTriggerDecoy :: DecoyTouch( CBaseEntity *pOther )
 		return;// only affect decoys
 
 	SetTouch( NULL );
-	SetThink( SUB_Remove );
+	SetThink( &CBaseEntity::SUB_Remove );
 	pev->nextthink = gpGlobals->time + 0.1f;
 
 	SUB_UseTargets( pOther, USE_TOGGLE, 0 );
@@ -1502,7 +1496,7 @@ void CTriggerRemove :: Spawn ( void )
 		pev->button &= ~FL_CLIENT;
 
 	InitTrigger ();
-	SetTouch( RemoveTouch );
+	SetTouch( &CTriggerRemove::RemoveTouch );
 }
 
 void CTriggerRemove :: RemoveTouch( CBaseEntity *pOther )
@@ -1514,5 +1508,5 @@ void CTriggerRemove :: RemoveTouch( CBaseEntity *pOther )
 	pOther->pev->modelindex = 0;
 	pOther->pev->model = 0;
 	UTIL_Remove( pOther );
-#endif /* HIPNOTIC */
 }
+#endif /* HIPNOTIC */

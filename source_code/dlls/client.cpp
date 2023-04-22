@@ -23,6 +23,7 @@
 
 */
 
+#include <cctype>
 #include "extdll.h"
 #include "util.h"
 #include "cbase.h"
@@ -574,7 +575,8 @@ void Host_Say( edict_t *pEntity, int teamonly )
 	}
 
 // make sure the text has content
-	for ( char *pc = p; pc != NULL && *pc != 0; pc++ )
+	char *pc;
+	for ( pc = p; pc != NULL && *pc != 0; pc++ )
 	{
 		if ( !isspace( *pc ) )
 		{

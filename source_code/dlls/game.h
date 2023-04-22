@@ -38,9 +38,7 @@ extern cvar_t	*g_footsteps;
 extern cvar_t	*g_psv_quakehulls;
 
 #ifndef HIPNOTIC
-#endif		// GAME_H
-#else /* HIPNOTIC */
 extern void	Cmd_ShowRotateClip_f( void );
+#endif /* HIPNOTIC */
 
 #endif		// GAME_H
-#endif /* HIPNOTIC */

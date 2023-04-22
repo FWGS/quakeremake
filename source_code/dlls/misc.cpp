@@ -68,7 +68,7 @@ public:
 		pev->vuser1 = tr.vecPlaneNormal * -1;
 		UTIL_DecalTrace( &tr, DECAL_SCORCH1 + RANDOM_LONG( 0, 1 ));
 
-		SetThink( DieThink );
+		SetThink( &CFireBall::DieThink );
 		SetTouch( NULL );
 
 		pev->renderfx = kRenderLavaDeform;
@@ -121,7 +121,7 @@ void CFireBallSource :: Think( void )
 	pFireBall->pev->avelocity.x = RANDOM_FLOAT( -50, 50 );
 	pFireBall->pev->avelocity.y = RANDOM_FLOAT( -50, 50 );
 	pFireBall->pev->avelocity.z = RANDOM_FLOAT( -50, 50 );
-	pFireBall->SetTouch( CFireBall::LavaTouch );
+	pFireBall->SetTouch( &CFireBall::LavaTouch );
 	pFireBall->pev->vuser1 = Vector( 1, 1, 1 );
 
 	if( g_fXashEngine )
@@ -178,7 +178,7 @@ void CExploBox :: Spawn( void )
 	pev->health = 20;
 	pev->takedamage = DAMAGE_AIM;
 
-	SetThink( FallInit );
+	SetThink( &CExploBox::FallInit );
 	if (g_fXashEngine)
 		pev->nextthink = gpGlobals->time + 0.2;
 	else pev->nextthink = gpGlobals->time + 1.0; // make sure what client is changed hulls
@@ -266,7 +266,7 @@ void CExploBox :: Killed( entvars_t *pevAttacker, int iGib )
 		WRITE_BYTE( BREAK_METAL );
 	MESSAGE_END();
 
-	SetThink( SUB_Remove );
+	SetThink( &CExploBox::SUB_Remove );
 	pev->nextthink = pev->nextthink + 0.1;
 }
 
@@ -422,23 +422,30 @@ public:
 
 #ifndef HIPNOTIC
 /*QUAKED trap_shooter (0 .5 .8) (-8 -8 -8) (8 8 8) superspike laser
-#else /* HIPNOTIC */
-/*QUAKED trap_shooter (0 .5 .8) (-8 -8 -8) (8 8 8) superspike laser lavaball rocket silent
-#endif /* HIPNOTIC */
 Continuously fires spikes.
 "wait" time between spike (1.0 default)
 "nextthink" delay before firing first spike, so multiple shooters can be stagered.
 */
+#else /* HIPNOTIC */
+/*QUAKED trap_shooter (0 .5 .8) (-8 -8 -8) (8 8 8) superspike laser lavaball rocket silent
+Continuously fires spikes.
+"wait" time between spike (1.0 default)
+"nextthink" delay before firing first spike, so multiple shooters can be stagered.
+*/
+#endif /* HIPNOTIC */
 LINK_ENTITY_TO_CLASS( trap_shooter, CSpikeShooter );
 
 #ifndef HIPNOTIC
 /*QUAKED trap_spikeshooter (0 .5 .8) (-8 -8 -8) (8 8 8) superspike laser
-#else /* HIPNOTIC */
-/*QUAKED trap_spikeshooter (0 .5 .8) (-8 -8 -8) (8 8 8) superspike laser lavaball rocket silent
-#endif /* HIPNOTIC */
 When triggered, fires a spike in the direction set in QuakeEd.
 Laser is only for REGISTERED.
 */
+#else /* HIPNOTIC */
+/*QUAKED trap_spikeshooter (0 .5 .8) (-8 -8 -8) (8 8 8) superspike laser lavaball rocket silent
+When triggered, fires a spike in the direction set in QuakeEd.
+Laser is only for REGISTERED.
+*/
+#endif /* HIPNOTIC */
 LINK_ENTITY_TO_CLASS( trap_spikeshooter, CSpikeShooter );
 
 #ifdef HIPNOTIC
@@ -460,8 +467,8 @@ void CSpikeShooter :: KeyValue( KeyValueData *pkvd )
 	else
 		CBaseToggle::KeyValue( pkvd );
 }
-
 #endif /* HIPNOTIC */
+
 void CSpikeShooter::Precache( void )
 {
 	if (pev->spawnflags & SF_LASER)
@@ -609,7 +616,7 @@ void CEventLighting :: LightingFire( void )
 	}
 
 	pev->nextthink = gpGlobals->time + 0.1;
-	SetThink( LightingFire );
+	SetThink( &CEventLighting::LightingFire );
 
 	p1 = (pDoor1->pev->mins + pDoor1->pev->maxs) * 0.5f;
 	p1.z = pDoor1->pev->absmin.z - 16;
@@ -681,11 +688,9 @@ void CEventLighting :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_T
 	{
 		pBoss->TakeDamage( pev, pActivator->pev, 1, DMG_SHOCK );
 	}	
-#ifndef HIPNOTIC
-}
-#else /* HIPNOTIC */
 }
 
+#ifdef HIPNOTIC
 class CInfoCommand : public CBaseEntity
 {
 public:
@@ -740,7 +745,7 @@ void CFuncExploder :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TY
 
 	if( m_flDelay )
 	{
-		SetThink( Explosion );
+		SetThink( &CFuncExploder::Explosion );
 		pev->nextthink = gpGlobals->time + m_flDelay;
 		m_flDelay = 0.0f;
 	}
@@ -851,14 +856,14 @@ void CFuncMultiExploder :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, U
 
 	if( m_flDelay )
 	{
-		SetThink( ExplosionThink );
+		SetThink( &CFuncMultiExploder::ExplosionThink );
 		pev->nextthink = gpGlobals->time + m_flDelay;
 		m_flDelay = 0.0f;
 	}
 	else
 	{
 		// fire immediately
-		SetThink( ExplosionThink );
+		SetThink( &CFuncMultiExploder::ExplosionThink );
 		ExplosionThink ();
 	}
 }
@@ -965,7 +970,7 @@ void CRubblePiece :: Spawn( const char *szGibModel )
 	pev->avelocity.y = RANDOM_FLOAT( 0, 600 );
 	pev->avelocity.z = RANDOM_FLOAT( 0, 600 );
 
-	SetThink( SUB_Remove );
+	SetThink( &CBaseEntity::SUB_Remove );
 
 	pev->nextthink = gpGlobals->time + RANDOM_FLOAT( 23.0f, 32.0f );
 	pev->dmgtime = gpGlobals->time;

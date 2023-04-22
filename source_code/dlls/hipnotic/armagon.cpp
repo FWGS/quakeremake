@@ -639,7 +639,7 @@ void CArmagon :: BodyExplode1( void )
 	else
 	{
 		m_flCnt = 0;
-		SetThink( BodyExplode2 );
+		SetThink( &CArmagon::BodyExplode2 );
 	}
 
 	// animation needs
@@ -843,7 +843,7 @@ void CArmagon :: HandleAnimEvent( MonsterEvent_t *pEvent )
 		break;
 	case ARMAGON_BODY_EXPLODE:
 		StopAnimation();
-		SetThink( BodyExplode1 );
+		SetThink( &CArmagon::BodyExplode1 );
 		CFuncMultiExploder::MultiExplosion( pev->origin + Vector( 0, 0, 80 ), 20.0f, 10.0f, 3, 0.1f, 0.5f );
 		pev->nextthink = gpGlobals->time + 0.1f;
 		break;

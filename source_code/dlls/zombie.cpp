@@ -267,7 +267,7 @@ void CZombie :: Spawn( void )
 		m_iAIState = STATE_IDLE;
 		SetActivity( ACT_SLEEP );
 
-		SetThink( MonsterThink );
+		SetThink( &CQuakeMonster::MonsterThink );
 		pev->nextthink = gpGlobals->time + (RANDOM_LONG( 1, 10 ) * 0.1f);
 	}
 	else
@@ -284,12 +284,12 @@ void CZombie :: Spawn( void )
 				pev->yaw_speed = 20;
 
 			SetEyePosition();
-			SetUse( MonsterUse );
+			SetUse( &CQuakeMonster::MonsterUse );
                               SetPainState();
 
 			pev->flags |= FL_MONSTER;
 			m_flPauseTime = 99999999;
-			SetThink( ZombieLyingDown );
+			SetThink( &CZombie::ZombieLyingDown );
 			pev->nextthink = gpGlobals->time + 0.1f;
 
 			StopAnimation();
@@ -334,7 +334,7 @@ void CZombie :: ZombieDefeated( void )
 	else
 	{
 		ResetSequenceInfo( );
-		SetThink( MonsterThink );
+		SetThink( &CQuakeMonster::MonsterThink );
 		pev->nextthink = gpGlobals->time + 0.1f;
 	}
 #ifdef HIPNOTIC
@@ -348,7 +348,7 @@ void CZombie :: ZombieLyingDown( void )
 	{
 		SetPainState(); // restore pain state
 		ResetSequenceInfo( );
-		SetThink( MonsterThink );
+		SetThink( &CQuakeMonster::MonsterThink );
 	}
 
 	pev->nextthink = gpGlobals->time + 0.1f;
@@ -391,7 +391,7 @@ void CZombie :: HandleAnimEvent( MonsterEvent_t *pEvent )
 	case ZOMBIE_TEMPORARY_DEAD:
 		if( !pev->frags )
 		{
-			SetThink( ZombieDefeated );
+			SetThink( &CZombie::ZombieDefeated );
 			pev->nextthink = gpGlobals->time + 5.0f;
 			StopAnimation(); // stop the animation!
 			pev->solid = SOLID_NOT;

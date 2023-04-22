@@ -182,9 +182,10 @@ void CBaseEntity::SetObjectCollisionBox( void )
 	{	
 		// expand for rotation
 		float	max, v;
+		int i;
 
 		max = 0;
-		for (int i=0 ; i<3 ; i++)
+		for (i=0 ; i<3 ; i++)
 		{
 			v = fabs( pev->mins[i] );
 			if (v > max)

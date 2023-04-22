@@ -369,7 +369,7 @@ void CPlaySoundTriggered :: Spawn( void )
 	}
 
 	Precache ();
-	SetUse( PlaySoundUse );
+	SetUse( &CPlaySoundBase::PlaySoundUse );
 }
 
 /*QUAKED play_sound (0.3 0.1 0.6) (-8 -8 -8) (8 8 8)

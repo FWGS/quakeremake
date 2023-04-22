@@ -107,7 +107,7 @@ void CShamLightning :: Spawn( void )
 
 	// Safety removal
 	pev->nextthink = gpGlobals->time + 0.7f;
-	SetThink( SUB_Remove );
+	SetThink( &CBaseEntity::SUB_Remove );
 
 	SET_MODEL( ENT(pev), "models/s_light.mdl" );
 	UTIL_SetOrigin( pev, pev->origin );
@@ -209,11 +209,11 @@ BOOL CShambler::MonsterCheckAttack( void )
 void CShambler :: BeginCharging( void )
 {
 	// we already in charging
-	if( m_pfnThink == Charge )
+	if( m_pfnThink == &CShambler::Charge )
 		return;
 
 	StopAnimation ();
-	SetThink( Charge );
+	SetThink( &CShambler::Charge );
 	pev->nextthink = gpGlobals->time + 0.1;
 	pev->effects |= EF_MUZZLEFLASH;
 
@@ -246,7 +246,7 @@ void CShambler :: Charge( void )
 
 		if( m_iChargeState == SHAM_STATE_END_CHARGING )
 		{
-			SetThink( MonsterThink );
+			SetThink( &CShambler::MonsterThink );
 			m_iChargeState = SHAM_STATE_START_CHARGING;
 			pev->nextthink = gpGlobals->time + 0.1;
 			return;
@@ -264,7 +264,7 @@ void CShambler :: Charge( void )
 void CShambler :: EndCharging( void )
 {
 	// we not in charging
-	if( m_pfnThink != Charge )
+	if( m_pfnThink != &CShambler::Charge )
 		return;
 
 	if( pev->owner )

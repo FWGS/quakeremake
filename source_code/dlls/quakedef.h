@@ -55,7 +55,9 @@
 #define IT_GRENADE_LAUNCHER		(1<<4)
 #define IT_ROCKET_LAUNCHER		(1<<5)
 #define IT_LIGHTNING		(1<<6)
+#ifndef HIPNOTIC
 #define IT_EXTRA_WEAPON		(1<<7)
+#endif
 
 // ammo
 #define IT_SHELLS			(1<<8)

@@ -139,7 +139,7 @@ void CGremlin :: MonsterPain( CBaseEntity *pAttacker, float flDamage )
 		FoundTarget();
 	}
 
-	if( m_pfnTouch == JumpTouch )
+	if( m_pfnTouch == &CGremlin::JumpTouch )
 		return;
 
 	if( pev->pain_finished > gpGlobals->time )
@@ -1300,7 +1300,7 @@ void CGremlin :: MonsterLeap( void )
 
 	if( pev->flags & FL_ONGROUND )
 	{	
-		SetTouch( JumpTouch );
+		SetTouch( &CGremlin::JumpTouch );
 		UTIL_MakeVectors( pev->angles );
 
 		pev->origin.z++;
@@ -1655,7 +1655,7 @@ void CGremlin :: HandleAnimEvent( MonsterEvent_t *pEvent )
 		}
 		break;
 	case GREM_FLIP_TOUCH:
-		SetTouch( FlipTouch );
+		SetTouch( &CGremlin::FlipTouch );
 		break;
 	case GREM_GORGE_RIGHT:
 		MonsterGorge( 200 );

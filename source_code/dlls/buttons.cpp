@@ -124,7 +124,7 @@ void CBaseButton::Spawn( void )
 	pev->solid	= SOLID_BSP;
 	SET_MODEL(ENT(pev), STRING(pev->model));
 
-	SetUse( ButtonUse );
+	SetUse( &CBaseButton::ButtonUse );
 	
 	if (pev->speed == 0)
 		pev->speed = 40;
@@ -136,7 +136,7 @@ void CBaseButton::Spawn( void )
 	}
 	else
 	{
-		SetTouch( ButtonTouch );
+		SetTouch( &CBaseButton::ButtonTouch );
 	}
 
 	if (m_flWait == 0)
@@ -185,7 +185,7 @@ void CBaseButton::ButtonActivate( void )
 
 	m_toggle_state = TS_GOING_UP;
 	
-	SetMoveDone( TriggerAndWait );
+	SetMoveDone( &CBaseButton::TriggerAndWait );
 
 	LinearMove( m_vecPosition2, pev->speed );
 }
@@ -198,7 +198,7 @@ void CBaseButton::TriggerAndWait( void )
 	m_toggle_state = TS_AT_TOP;
 	
 	pev->nextthink = pev->ltime + m_flWait;
-	SetThink( ButtonReturn );
+	SetThink( &CBaseButton::ButtonReturn );
 
 	SUB_UseTargets( m_hActivator, USE_TOGGLE, 0 );
 	pev->frame = 1; // use alternate textures
@@ -212,7 +212,7 @@ void CBaseButton::ButtonReturn( void )
 {
 	m_toggle_state = TS_GOING_DOWN;
 	
-	SetMoveDone( ButtonBackHome );
+	SetMoveDone( &CBaseButton::ButtonBackHome );
 
 	LinearMove( m_vecPosition1, pev->speed);
 

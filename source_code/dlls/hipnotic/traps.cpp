@@ -164,14 +164,14 @@ void CLightningTrap :: Spawn( void )
 	m_flCnt = 0;
 
 	if( FClassnameIs( pev, "trap_lightning_switched" ))
-		SetUse( SwitchedUse );
-	else SetUse( LightningUse );
+		SetUse( &CLightningTrap::SwitchedUse );
+	else SetUse( &CLightningTrap::LightningUse );
 
 	if( FClassnameIs( pev, "trap_lightning" ))
 		pev->button = TRUE;
 
 	pev->dmgtime = pev->nextthink;
-	SetThink( FirstThink );	
+	SetThink( &CLightningTrap::FirstThink );
 	pev->nextthink = gpGlobals->time + 0.25f;
 	m_iDeathType = MAKE_STRING( "is electrocuted" );
 }
@@ -272,7 +272,7 @@ void CLightningTrap :: FirstThink( void )
 	}
 	else
 	{
-		SetThink( RegularThink );
+		SetThink( &CLightningTrap::RegularThink );
 		pev->nextthink = pev->dmgtime + m_flWait + pev->ltime;
 	}
 }
@@ -628,7 +628,7 @@ void CTeslaCoil :: Spawn( void )
 		m_flDelay = -1.0f;
 
 	pev->nextthink = gpGlobals->time + RANDOM_FLOAT( 0.0f, 1.0f );
-	SetThink( TeslaThink );
+	SetThink( &CRadiusTrap::TeslaThink );
 	m_hActivator = gpWorld;
 	m_iNumTargets = 0;
 	pev->impulse = 0;
@@ -688,7 +688,7 @@ void CGodsWrath :: Spawn( void )
 	if( m_flDelay == 0.0f )
 		m_flDelay = 5.0f;
 
-	SetThink( TeslaThink );
+	SetThink( &CRadiusTrap::TeslaThink );
 	m_hActivator = gpWorld;
 	pev->nextthink = -1;
 	m_iNumTargets = 0;
@@ -750,7 +750,7 @@ void CGravityWell :: Spawn( void )
 		m_flCnt = (FL_CLIENT|FL_MONSTER);
 	else m_flCnt = FL_CLIENT;
 
-	SetThink( GravityThink );
+	SetThink( &CRadiusTrap::GravityThink );
 	m_hActivator = gpWorld;
 	pev->nextthink = gpGlobals->time + 0.1f;
 	pev->ltime = gpGlobals->time;
@@ -825,8 +825,8 @@ void CSpikeMine :: Spawn( void )
 		pev->health = 200;
 	else pev->health = 400;
 
-	SetThink( FirstThink );
-	SetTouch( SpikeTouch );
+	SetThink( &CSpikeMine::FirstThink );
+	SetTouch( &CSpikeMine::SpikeTouch );
 	pev->nextthink = gpGlobals->time + 0.2f;
 
 	// add one monster to stat
@@ -838,7 +838,7 @@ void CSpikeMine :: Spawn( void )
 
 void CSpikeMine :: FirstThink( void )
 {
-	SetThink( SpikeHome );
+	SetThink( &CSpikeMine::SpikeHome );
 
 	pev->nextthink = gpGlobals->time + 0.1f;
 	pev->air_finished = 0; // search time
@@ -846,7 +846,7 @@ void CSpikeMine :: FirstThink( void )
 	pev->animtime = gpGlobals->time + 0.1f;
 	pev->framerate = 1.0f;
 
-	SetUse( MonsterUse );
+	SetUse( &CQuakeMonster::MonsterUse );
 }
 
 void CSpikeMine :: SpikeHome( void )

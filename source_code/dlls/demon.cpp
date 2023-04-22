@@ -70,7 +70,7 @@ void CDemon :: MonsterSight( void )
 
 void CDemon :: MonsterPain( CBaseEntity *pAttacker, float flDamage )
 {
-	if( m_pfnTouch == JumpTouch )
+	if( m_pfnTouch == &CDemon::JumpTouch )
 		return;
 
 	if( pev->pain_finished > gpGlobals->time )
@@ -160,7 +160,7 @@ void CDemon :: MonsterLeap( void )
 {
 	AI_Face();
 	
-	SetTouch( JumpTouch );
+	SetTouch( &CDemon::JumpTouch );
 	UTIL_MakeVectors( pev->angles );
 
 	pev->origin.z++;

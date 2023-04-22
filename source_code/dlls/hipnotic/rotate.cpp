@@ -42,7 +42,7 @@ Used as the point of rotation for rotatable objects.
 class CInfoRotate : public CBaseEntity
 {
 public:
-	void Spawn( void ) { SetThink( SUB_Remove ); pev->nextthink = gpGlobals->time + 2.0f; }
+	void Spawn( void ) { SetThink( &CBaseEntity::SUB_Remove ); pev->nextthink = gpGlobals->time + 2.0f; }
 };
 
 LINK_ENTITY_TO_CLASS( info_rotate, CInfoRotate );
@@ -118,7 +118,7 @@ void CFuncRotate :: Spawn( void )
 		m_flCnt = 1.0f / pev->speed;
 	}
 
-	SetThink( FirstThink );
+	SetThink( &CFuncRotate::FirstThink );
 	pev->nextthink = gpGlobals->time + 0.1f;
 	pev->ltime = gpGlobals->time;
 }
@@ -268,7 +268,7 @@ void CFuncRotate :: FirstThink( void )
 		m_rotate_state = STATE_ACTIVE;
 		pev->nextthink = gpGlobals->time + 0.01;
 		pev->ltime = gpGlobals->time;
-		SetThink( NormalThink );
+		SetThink( &CFuncRotate::NormalThink );
 	}
 	else
 	{
@@ -338,7 +338,7 @@ void CFuncRotate :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE
 	}
 	else if( m_rotate_state == STATE_INACTIVE )
 	{
-		SetThink( NormalThink );
+		SetThink( &CFuncRotate::NormalThink );
 		pev->nextthink = gpGlobals->time + 0.01f;
 		pev->ltime = gpGlobals->time;
 
@@ -570,8 +570,8 @@ void CFuncRotateTrain :: Spawn( void )
 	pev->ltime = gpGlobals->time;
 	pev->nextthink = pev->ltime + 0.1f;
 	m_flEndTime = pev->ltime + 0.1f;
-	SetThink( TrainThink );
-	SetThink2( TrainFind );
+	SetThink( &CFuncRotateTrain::TrainThink );
+	SetThink2( &CFuncRotateTrain::TrainFind );
 	m_rotate_state = STATE_FIND;
 
 	m_flDuration = 1.0f;	// 1 / duration
@@ -584,7 +584,7 @@ void CFuncRotateTrain :: Spawn( void )
 
 void CFuncRotateTrain :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
-	if( m_pfnThink2 != TrainFind )
+	if( m_pfnThink2 != &CFuncRotateTrain::TrainFind )
 	{
 		if( pev->velocity != g_vecZero )
 			return; // already activated
@@ -622,7 +622,7 @@ void CFuncRotateTrain :: TrainFind( void )
 	UTIL_SetOrigin( pev, m_pGoalEnt->pev->origin );
 	SetTargetOrigin();
 	RotateTargetsFinal();
-	SetThink2( TrainNext );
+	SetThink2( &CFuncRotateTrain::TrainNext );
 
 	if( !pev->targetname )
 	{
@@ -706,7 +706,7 @@ void CFuncRotateTrain :: TrainWait( void )
 	}
 
 	m_flEndTime = pev->ltime + m_pGoalEnt->pev->frags;
-	SetThink2( TrainNext );
+	SetThink2( &CFuncRotateTrain::TrainNext );
 }
 
 void CFuncRotateTrain :: TrainStop( void )
@@ -740,7 +740,7 @@ void CFuncRotateTrain :: TrainStop( void )
 	}
 
 	pev->dmg = 0;
-	SetThink2( TrainNext );
+	SetThink2( &CFuncRotateTrain::TrainNext );
 }
 
 void CFuncRotateTrain :: TrainNext( void )
@@ -776,15 +776,15 @@ void CFuncRotateTrain :: TrainNext( void )
 
 	if( m_pGoalEnt->pev->spawnflags & SF_PATH_STOP )
 	{
-		SetThink2( TrainStop );
+		SetThink2( &CFuncRotateTrain::TrainStop );
 	}
 	else if( m_pGoalEnt->pev->frags )
 	{
-		SetThink2( TrainWait );
+		SetThink2( &CFuncRotateTrain::TrainWait );
 	}
 	else
 	{
-		SetThink2( TrainNext );
+		SetThink2( &CFuncRotateTrain::TrainNext );
 	}
 
 	if( pCurrent->pev->netname )
@@ -1097,7 +1097,7 @@ void CFuncRotateDoor :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_
 	EMIT_SOUND(ENT(pev), CHAN_VOICE, (char*)STRING( pev->noise1 ), 1, ATTN_NORM);
 
 	m_vecRotate = ( m_vecDestAngle - start ) * ( 1.0f / pev->speed );
-	SetThink( DoorThink1 );
+	SetThink( &CFuncRotateDoor::DoorThink1 );
 
 	pev->nextthink = gpGlobals->time + 0.01f;
 	m_flEndTime = gpGlobals->time + pev->speed;
@@ -1118,7 +1118,7 @@ void CFuncRotateDoor :: DoorThink1( void )
 	{
 		pev->angles = m_vecDestAngle;
 		RotateTargets();
-		SetThink( DoorThink2 );
+		SetThink( &CFuncRotateDoor::DoorThink2 );
 	}
 
 	pev->nextthink = gpGlobals->time + 0.01f;
@@ -1177,7 +1177,7 @@ void CFuncRotateDoor :: ReverseDirection( void )
 	EMIT_SOUND(ENT(pev), CHAN_VOICE, (char*)STRING( pev->noise1 ), 1, ATTN_NORM);
 
 	m_vecRotate = ( m_vecDestAngle - start ) * ( 1.0f / pev->speed );
-	SetThink( DoorThink1 );
+	SetThink( &CFuncRotateDoor::DoorThink1 );
 
 	pev->nextthink = gpGlobals->time + 0.01;
 	m_flEndTime = gpGlobals->time + pev->speed - ( m_flEndTime - gpGlobals->time );
@@ -1247,12 +1247,12 @@ void CMoveWall :: Spawn( void )
 	else
 	{
 		pev->solid = SOLID_BSP;
-		SetBlocked( WallBlocked );
+		SetBlocked( &CMoveWall::WallBlocked );
 	}
 
 	if( pev->spawnflags & SF_MOVEWALL_TOUCH )
 	{
-		SetTouch( WallTouch );
+		SetTouch( &CMoveWall::WallTouch );
 	}
 
 	SET_MODEL( ENT(pev), STRING(pev->model) );
@@ -1370,7 +1370,7 @@ void CFuncClock :: Spawn( void )
 	if( !m_flCount ) m_flCount = 60;
 	m_flCnt *= ( m_flCount / 12.0f );
 
-	SetThink( FirstThink );
+	SetThink( &CFuncClock::FirstThink );
 	pev->nextthink = gpGlobals->time + 0.1;
 	pev->ltime = gpGlobals->time;
 }
@@ -1378,7 +1378,7 @@ void CFuncClock :: Spawn( void )
 void CFuncClock :: FirstThink( void )
 {
 	LinkRotateTargets();
-	SetThink( ClockThink );
+	SetThink( &CFuncClock::ClockThink );
 
 	ClockThink();
 }

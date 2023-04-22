@@ -222,7 +222,7 @@ void CDog :: MonsterLeap( void )
 {
 	AI_Face();
 	
-	SetTouch( JumpTouch );
+	SetTouch( &CDog::JumpTouch );
 	UTIL_MakeVectors( pev->angles );
 
 	pev->origin.z++;

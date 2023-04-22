@@ -121,7 +121,7 @@ void CDoorTrigger :: Touch( CBaseEntity *pOther )
 		ALERT( at_error, "%s with no linked door. Removed\n", STRING( pev->classname ));
 
 		pev->nextthink = gpGlobals->time + 0.1;
-		SetThink( SUB_Remove );
+		SetThink( &CDoorTrigger::SUB_Remove );
 		return; 
 	}
 
@@ -213,7 +213,7 @@ void CBaseDoor::Spawn( void )
 
 	m_toggle_state = TS_AT_BOTTOM;
 
-	SetTouch( DoorTouch );
+	SetTouch( &CBaseDoor::DoorTouch );
 	
 	// if the door is flagged for USE button activation only, use NULL touch function
 	if (pev->health > 0)
@@ -227,7 +227,7 @@ void CBaseDoor::Spawn( void )
 	if (pev->team)
 		m_flWait = -1;
 
-	SetThink( LinkDoors );
+	SetThink( &CBaseDoor::LinkDoors );
 	pev->nextthink = pev->ltime + 0.1;
 }
 
@@ -376,7 +376,7 @@ void CBaseDoor :: LinkDoors( void )
 			{
 				ALERT( at_error, "cross connected doors\n" );
 				pCurrent->pev->nextthink = pev->ltime + 0.1;
-				pCurrent->SetThink( SUB_Remove );
+				pCurrent->SetThink( &CBaseEntity::SUB_Remove );
 				return;
 			}			
                               
@@ -513,7 +513,7 @@ void CBaseDoor::DoorActivate( void )
 		ALERT( at_error, "DoorActivate: %s invalid link. Removed\n", STRING( pev->classname ));
 
 		pev->nextthink = pev->ltime + 0.1;
-		SetThink( SUB_Remove );
+		SetThink( &CBaseEntity::SUB_Remove );
 		return; 
 	}
 */
@@ -564,7 +564,7 @@ void CBaseDoor::DoorHitTop( void )
 	if (FBitSet(pev->spawnflags, SF_DOOR_TOGGLE))
 		return;
 
-	SetThink( DoorGoDown );
+	SetThink( &CBaseDoor::DoorGoDown );
 	pev->nextthink = pev->ltime + m_flWait;
 }
 
@@ -594,7 +594,7 @@ void CBaseDoor::DoorGoDown( void )
 
 	m_toggle_state = TS_GOING_DOWN;
 
-	SetMoveDone( DoorHitBottom );
+	SetMoveDone( &CBaseDoor::DoorHitBottom );
 	LinearMove( m_vecPosition1, pev->speed);
 }
 
@@ -620,7 +620,7 @@ void CBaseDoor::DoorGoUp( void )
 
 	m_toggle_state = TS_GOING_UP;
 	
-	SetMoveDone( DoorHitTop );
+	SetMoveDone( &CBaseDoor::DoorHitTop );
 	LinearMove(m_vecPosition2, pev->speed);
 
 #ifndef HIPNOTIC
@@ -835,7 +835,7 @@ void CSecretDoor::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE u
 
 	m_vecPosition2 = m_vecPosition1 + gpGlobals->v_forward * m_flTLength;
 
-	SetMoveDone( Move1 );
+	SetMoveDone( &CSecretDoor::Move1 );
 	LinearMove(m_vecPosition1, pev->speed);
 
 	EMIT_SOUND(ENT(pev), CHAN_VOICE, (char*)STRING( pev->noise1 ), 1, ATTN_NORM);
@@ -862,14 +862,14 @@ void CSecretDoor :: Touch( CBaseEntity *pOther )
 void CSecretDoor::Move1( void )
 {
 	pev->nextthink = pev->ltime + 1.0;
-	SetThink( Move2 );
+	SetThink( &CSecretDoor::Move2 );
 	EMIT_SOUND(ENT(pev), CHAN_VOICE, (char*)STRING( pev->noise2 ), 1, ATTN_NORM);
 }
 
 // Start moving sideways w/sound...
 void CSecretDoor::Move2( void )
 {
-	SetMoveDone( Move3 );
+	SetMoveDone( &CSecretDoor::Move3 );
 	LinearMove(m_vecPosition2, pev->speed);
 	EMIT_SOUND(ENT(pev), CHAN_VOICE, (char*)STRING( pev->noise1 ), 1, ATTN_NORM);
 }
@@ -881,7 +881,7 @@ void CSecretDoor::Move3( void )
 	if (!(pev->spawnflags & SF_SECRET_OPEN_ONCE))
 	{
 		pev->nextthink = pev->ltime + m_flWait;
-		SetThink( Move4 );
+		SetThink( &CSecretDoor::Move4 );
 	}
 }
 
@@ -889,7 +889,7 @@ void CSecretDoor::Move3( void )
 void CSecretDoor::Move4( void )
 {
 	EMIT_SOUND(ENT(pev), CHAN_VOICE, (char*)STRING( pev->noise1 ), 1, ATTN_NORM);
-	SetMoveDone( Move5 );
+	SetMoveDone( &CSecretDoor::Move5 );
 	LinearMove(m_vecPosition1, pev->speed);
 }
 
@@ -897,14 +897,14 @@ void CSecretDoor::Move4( void )
 void CSecretDoor::Move5( void )
 {
 	pev->nextthink = pev->ltime + 1.0;
-	SetThink( Move6 );
+	SetThink( &CSecretDoor::Move6 );
 	EMIT_SOUND(ENT(pev), CHAN_VOICE, (char*)STRING( pev->noise2 ), 1, ATTN_NORM);
 }
 
 void CSecretDoor::Move6( void )
 {
 	EMIT_SOUND(ENT(pev), CHAN_VOICE, (char*)STRING( pev->noise1 ), 1, ATTN_NORM);
-	SetMoveDone( MoveDone );
+	SetMoveDone( &CSecretDoor::MoveDone );
 	LinearMove(pev->oldorigin, pev->speed);
 }
 

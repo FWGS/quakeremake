@@ -67,8 +67,8 @@ void CChthon :: Spawn( void )
 
 	Precache( );
 
-	SetUse( Awake );
-	SetThink( MonsterThink );
+	SetUse( &CChthon::Awake );
+	SetThink( &CQuakeMonster::MonsterThink );
 
 	// add one monster to stat
 	gpWorld->total_monsters++;
@@ -135,7 +135,7 @@ void CChthon :: AI_Idle( void )
 void CChthon :: AI_Face( void )
 {
 	// go for another player if multi player
-	if( m_hEnemy != NULL && m_hEnemy->pev->health <= 0.0f || RANDOM_FLOAT( 0, 1.0f ) < 0.02f )
+	if(( m_hEnemy != NULL && m_hEnemy->pev->health <= 0.0f ) || RANDOM_FLOAT( 0, 1.0f ) < 0.02f )
 	{
 		m_hEnemy = UTIL_FindEntityByClassname( m_hEnemy, "player" );
 		if( m_hEnemy == NULL )

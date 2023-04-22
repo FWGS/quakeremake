@@ -52,7 +52,7 @@ void CBaseEntity :: SUB_StartFadeOut ( void )
 	pev->avelocity = g_vecZero;
 
 	pev->nextthink = gpGlobals->time + 0.1;
-	SetThink ( SUB_FadeOut );
+	SetThink ( &CBaseEntity::SUB_FadeOut );
 }
 
 void CBaseEntity :: SUB_FadeOut ( void  )
@@ -66,7 +66,7 @@ void CBaseEntity :: SUB_FadeOut ( void  )
 	{
 		pev->renderamt = 0;
 		pev->nextthink = gpGlobals->time + 0.2;
-		SetThink ( SUB_Remove );
+		SetThink ( &CBaseEntity::SUB_Remove );
 	}
 }
 
@@ -86,7 +86,7 @@ void CGib :: WaitTillLand ( void )
 
 	if ( pev->velocity == g_vecZero )
 	{
-		SetThink (SUB_StartFadeOut);
+		SetThink (&CBaseEntity::SUB_StartFadeOut);
 		pev->nextthink = gpGlobals->time + m_lifeTime;
 	}
 	else
@@ -151,8 +151,8 @@ void CGib :: Spawn( const char *szGibModel )
 	m_bloodColor = BLOOD_COLOR_RED;
 	pev->nextthink = gpGlobals->time + 4;
 	m_lifeTime = 25;
-	SetThink ( WaitTillLand );
-	SetTouch ( BounceGibTouch );
+	SetThink ( &CGib::WaitTillLand );
+	SetTouch ( &CGib::BounceGibTouch );
 
 	m_cBloodDecals = 5;// how many blood decals this gib can place (1 per bounce until none remain). 
 }

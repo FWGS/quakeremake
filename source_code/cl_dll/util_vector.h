@@ -15,11 +15,12 @@
 //  Vector.h
 // A subset of the extdll.h in the project HL Entity DLL
 //
-
+#ifndef UTIL_VECTOR_H
+#define UTIL_VECTOR_H
 // Misc C-runtime library headers
-#include "STDIO.H"
-#include "STDLIB.H"
-#include "MATH.H"
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 
 // Header file containing definition of globalvars_t and entvars_t
 typedef int	func_t;					//
@@ -121,3 +122,4 @@ inline Vector CrossProduct(const Vector& a, const Vector& b) { return Vector( a.
 #define PlaneDiff(point,plane) (((plane)->type < 3 ? (point)[(plane)->type] : DotProduct((point), (plane)->normal)) - (plane)->dist)
 
 #define vec3_t Vector
+#endif // UTIL_VECTOR_H

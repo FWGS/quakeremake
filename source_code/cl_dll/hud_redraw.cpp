@@ -35,7 +35,7 @@ void CHud::Think(void)
 	if ( m_iFOV == 0 )
 	{
 		// only let players adjust up in fov,  and only if they are not overriden by something else
-		m_iFOV = max( default_fov->value, 90 );  
+		m_iFOV = Q_max( default_fov->value, 90 );  
 	}
 }
 
@@ -119,7 +119,8 @@ int CHud :: DrawHudNumberString( int xpos, int ypos, int iMinX, int iNumber, int
 int CHud :: DrawHudStringReverse( int xpos, int ypos, int iMinX, char *szString, int r, int g, int b )
 {
 	// find the end of the string
-	for ( char *szIt = szString; *szIt != 0; szIt++ )
+	char *szIt;
+	for ( szIt = szString; *szIt != 0; szIt++ )
 	{ // we should count the length?		
 	}
 

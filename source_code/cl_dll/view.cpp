@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2002, Valve LLC, All rights reserved. ============
+//========= Copyright (c) 1996-2002, Valve LLC, All rights reserved. ============
 //
 // Purpose: 
 //
@@ -12,7 +12,9 @@
 #include "cvardef.h"
 #include "usercmd.h"
 #include "const.h"
+#ifdef _WIN32
 #include <windows.h>
+#endif
 #include "entity_state.h"
 #include "cl_entity.h"
 #include "ref_params.h"
@@ -25,6 +27,7 @@
 #include "screenfade.h"
 #include "shake.h"
 #include "hltv.h"
+#include <string.h>
 
 // Spectator Mode
 extern "C" 
@@ -55,8 +58,8 @@ extern "C"
 	float	Distance(const float * v1, const float * v2);
 	float	AngleBetweenVectors(  const float * v1,  const float * v2 );
 
-	float	vJumpOrigin[3];
-	float	vJumpAngles[3];
+	extern float	vJumpOrigin[3];
+	extern float	vJumpAngles[3];
 }
 
 void V_DropPunchAngle ( float frametime, float *ev_punchangle );
@@ -169,8 +172,8 @@ float V_CalcBob ( struct ref_params_s *pparams )
 
 	bob = sqrt( vel[0] * vel[0] + vel[1] * vel[1] ) * cl_bob->value;
 	bob = bob * 0.3 + bob * 0.7 * sin(cycle);
-	bob = min( bob, 4 );
-	bob = max( bob, -7 );
+	bob = Q_min( bob, 4 );
+	bob = Q_max( bob, -7 );
 	return bob;
 	
 }
@@ -228,12 +231,14 @@ void V_StartPitchDrift( void )
 	}
 }
 
+#if 0
 void V_StopPitchDrift ( void )
 {
 	pd.laststop = gEngfuncs.GetClientTime();
 	pd.nodrift = 1;
 	pd.pitchvel = 0;
 }
+#endif
 
 /*
 ===============
@@ -247,6 +252,7 @@ mlook and mouse, or klook and keyboard, pitch drifting is constantly stopped.
 */
 void V_DriftPitch ( struct ref_params_s *pparams )
 {
+#if 0
 	float		delta, move;
 
 	if ( gEngfuncs.IsNoClipping() || !pparams->onground || pparams->demoplayback || pparams->spectator )
@@ -300,6 +306,7 @@ void V_DriftPitch ( struct ref_params_s *pparams )
 		}
 		pparams->cl_viewangles[PITCH] -= move;
 	}
+#endif
 }
 
 void V_CalcDamage( vec3_t from, int count )
@@ -997,7 +1004,7 @@ void V_CalcNormalRefdef ( struct ref_params_s *pparams )
 			if ( dt > 0.0 )
 			{
 				frac = ( t - ViewInterp.OriginTime[ foundidx & ORIGIN_MASK] ) / dt;
-				frac = min( 1.0, frac );
+				frac = Q_min( 1.0, frac );
 				VectorSubtract( ViewInterp.Origins[ ( foundidx + 1 ) & ORIGIN_MASK ], ViewInterp.Origins[ foundidx & ORIGIN_MASK ], delta );
 				VectorMA( ViewInterp.Origins[ foundidx & ORIGIN_MASK ], frac, delta, neworg );
 
@@ -1092,7 +1099,7 @@ void V_DropPunchAngle ( float frametime, float *ev_punchangle )
 	
 	len = VectorNormalize ( ev_punchangle );
 	len -= (10.0 + len * 0.5) * frametime;
-	len = max( len, 0.0 );
+	len = Q_max( len, 0.0 );
 	VectorScale ( ev_punchangle, len, ev_punchangle );
 }
 

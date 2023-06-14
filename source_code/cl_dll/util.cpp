@@ -18,9 +18,9 @@
 // implementation of class-less helper functions
 //
 
-#include "STDIO.H"
-#include "STDLIB.H"
-#include "MATH.H"
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 
 #include "hud.h"
 #include "cl_util.h"
@@ -28,8 +28,6 @@
 #include <stdarg.h>
 #include "in_defs.h"
 #include "com_model.h"
-
-vec3_t vec3_origin( 0, 0, 0 );
 
 double sqrt(double x);
 

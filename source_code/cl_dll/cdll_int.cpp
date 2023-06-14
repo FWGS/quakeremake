@@ -29,14 +29,16 @@ extern "C"
 }
 
 #include <string.h>
+#ifdef _WIN32
 #include <windows.h>
-
-#define DLLEXPORT __declspec( dllexport )
+#endif
+#include "exportdef.h"
 
 
 cl_enginefunc_t gEngfuncs;
 CHud gHUD;
 int g_iXashEngine = FALSE;
+int g_iXashFWGSEngine = FALSE;
 
 void InitInput (void);
 void EV_HookEvents( void );
@@ -69,6 +71,7 @@ void	DLLEXPORT HUD_DirectorMessage( int iSize, void *pbuf );
 void	DLLEXPORT Demo_ReadBuffer( int size, unsigned char *buffer );
 void	DLLEXPORT HUD_DrawNormalTriangles( void );
 void	DLLEXPORT HUD_DrawTransparentTriangles( void );
+void DLLEXPORT HUD_MobilityInterface( void *gpMobileEngfuncs );
 }
 
 /*
@@ -80,6 +83,7 @@ Vgui stub
 */
 int *HUD_GetRect( void )
 {
+#ifdef _WIN32
 	RECT wrect;
 	static int extent[4];
 
@@ -101,6 +105,16 @@ int *HUD_GetRect( void )
 		}
 	}
 	return extent;	
+#else
+	static int extent[4];
+
+	extent[0] = gEngfuncs.GetWindowCenterX() - ScreenWidth / 2;
+	extent[1] = gEngfuncs.GetWindowCenterY() - ScreenHeight / 2;
+	extent[2] = gEngfuncs.GetWindowCenterX() + ScreenWidth / 2;
+	extent[3] = gEngfuncs.GetWindowCenterY() + ScreenHeight / 2;
+
+	return extent;
+#endif
 }
 
 /*
@@ -352,4 +366,14 @@ Render any triangles with transparent rendermode needs here
 */
 void DLLEXPORT HUD_DrawTransparentTriangles( void )
 {
+}
+
+void DLLEXPORT HUD_MobilityInterface( void *gpMobileEngfuncs )
+{
+	g_iXashFWGSEngine = TRUE;
+}
+
+bool IsXashFWGS()
+{
+	return g_iXashFWGSEngine;
 }

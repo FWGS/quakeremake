@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2002, Valve LLC, All rights reserved. ============
+//========= Copyright (c) 1996-2002, Valve LLC, All rights reserved. ============
 //
 // Purpose: 
 //
@@ -15,7 +15,21 @@
 #include "camera.h"
 #include "in_defs.h"
 #include "cl_entity.h"
-#include "windows.h"
+#if _WIN32
+#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
+#define WIN32_EXTRA_LEAN
+#define HSPRITE WINDOWS_HSPRITE
+#include <windows.h>
+#undef HSPRITE
+#else
+typedef struct point_s
+{
+		int x;
+		int y;
+} POINT;
+#define GetCursorPos(x)
+#define SetCursorPos(x,y)
+#endif
 
 float CL_KeyState (kbutton_t *key);
 

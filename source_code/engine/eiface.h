@@ -96,8 +96,8 @@ typedef unsigned long	CRC32_t;
 // Engine hands this to DLLs for functionality callbacks
 typedef struct enginefuncs_s
 {
-	int	(*pfnPrecacheModel)( char* s );
-	int	(*pfnPrecacheSound)( char* s );
+	int	(*pfnPrecacheModel)( const char* s );
+	int	(*pfnPrecacheSound)( const char* s );
 	void	(*pfnSetModel)( edict_t *e, const char *m );
 	int	(*pfnModelIndex)( const char *m );
 	int	(*pfnModelFrames)( int modelIndex );
@@ -135,11 +135,11 @@ typedef struct enginefuncs_s
 	const char *(*pfnTraceTexture)( edict_t *pTextureEntity, const float *v1, const float *v2 );
 	void	(*pfnTraceSphere)( const float *v1, const float *v2, int fNoMonsters, float radius, edict_t *pentToSkip, TraceResult *ptr );
 	void	(*pfnGetAimVector)( edict_t* ent, float speed, float *rgflReturn );
-	void	(*pfnServerCommand)( char* str );
+	void	(*pfnServerCommand)( const char* str );
 	void	(*pfnServerExecute)( void );
-	void	(*pfnClientCommand)( edict_t* pEdict, char* szFmt, ... );
+	void	(*pfnClientCommand)( edict_t* pEdict, const char* szFmt, ... );
 	void	(*pfnParticleEffect)( const float *org, const float *dir, float color, float count );
-	void	(*pfnLightStyle)( int style, char* val );
+	void	(*pfnLightStyle)( int style, const char* val );
 	int	(*pfnDecalIndex)( const char *name );
 	int	(*pfnPointContents)( const float *rgflVector );
 	void	(*pfnMessageBegin)( int msg_dest, int msg_type, const float *pOrigin, edict_t *ed );
@@ -157,8 +157,8 @@ typedef struct enginefuncs_s
 	const char* (*pfnCVarGetString)( const char *szVarName );
 	void	(*pfnCVarSetFloat)( const char *szVarName, float flValue );
 	void	(*pfnCVarSetString)( const char *szVarName, const char *szValue );
-	void	(*pfnAlertMessage)( ALERT_TYPE atype, char *szFmt, ... );
-	void	(*pfnEngineFprintf)( FILE *pfile, char *szFmt, ... );
+	void	(*pfnAlertMessage)( ALERT_TYPE atype, const char *szFmt, ... );
+	void	(*pfnEngineFprintf)( FILE *pfile, const char *szFmt, ... );
 	void*	(*pfnPvAllocEntPrivateData)( edict_t *pEdict, long cb );
 	void*	(*pfnPvEntPrivateData)( edict_t *pEdict );
 	void	(*pfnFreeEntPrivateData)( edict_t *pEdict );
@@ -191,7 +191,7 @@ typedef struct enginefuncs_s
 	void	(*pfnSetView)( const edict_t *pClient, const edict_t *pViewent );
 	float	(*pfnTime)( void );
 	void	(*pfnCrosshairAngle)( const edict_t *pClient, float pitch, float yaw );
-	byte*	(*pfnLoadFileForMe)( char *filename, int *pLength );
+	byte*	(*pfnLoadFileForMe)( const char *filename, int *pLength );
 	void	(*pfnFreeFile)( void *buffer );
 	void	(*pfnEndSection)( const char *pszSectionName ); // trigger_endsection
 	int	(*pfnCompareFileTime)( char *filename1, char *filename2, int *iCompare );
@@ -203,10 +203,10 @@ typedef struct enginefuncs_s
 	void	(*pfnRunPlayerMove)( edict_t *fakeclient, const float *viewangles, float forwardmove, float sidemove, float upmove, unsigned short buttons, byte impulse, byte msec );
 	int	(*pfnNumberOfEntities)( void );
 	char*	(*pfnGetInfoKeyBuffer)( edict_t *e );			// passing in NULL gets the serverinfo
-	char*	(*pfnInfoKeyValue)( char *infobuffer, char *key );
-	void	(*pfnSetKeyValue)( char *infobuffer, char *key, char *value );
-	void	(*pfnSetClientKeyValue)( int clientIndex, char *infobuffer, char *key, char *value );
-	int	(*pfnIsMapValid)( char *filename );
+	char*	(*pfnInfoKeyValue)( char *infobuffer, const char *key );
+	void	(*pfnSetKeyValue)( char *infobuffer, const char *key, const char *value );
+	void	(*pfnSetClientKeyValue)( int clientIndex, char *infobuffer, const char *key, const char *value );
+	int	(*pfnIsMapValid)( const char *filename );
 	void	(*pfnStaticDecal)( const float *origin, int decalIndex, int entityIndex, int modelIndex );
 	int	(*pfnPrecacheGeneric)( char *s );
 	int	(*pfnGetPlayerUserId)( edict_t *e ); // returns the server assigned userid for this player.  useful for logging frags, etc.  returns -1 if the edict couldn't be found in the list of clients
@@ -230,7 +230,7 @@ typedef struct enginefuncs_s
 
 	void	(*pfnDeltaSetField)	( struct delta_s *pFields, const char *fieldname );
 	void	(*pfnDeltaUnsetField)( struct delta_s *pFields, const char *fieldname );
-	void	(*pfnDeltaAddEncoder)( char *name, void (*conditionalencode)( struct delta_s *pFields, const unsigned char *from, const unsigned char *to ) );
+	void	(*pfnDeltaAddEncoder)( const char *name, void (*conditionalencode)( struct delta_s *pFields, const unsigned char *from, const unsigned char *to ) );
 	int	(*pfnGetCurrentPlayer)( void );
 	int	(*pfnCanSkipPlayer)( const edict_t *player );
 	int	(*pfnDeltaFindField)( struct delta_s *pFields, const char *fieldname );
@@ -382,7 +382,7 @@ typedef enum _fieldtypes
 typedef struct 
 {
 	FIELDTYPE		fieldType;
-	char		*fieldName;
+	const char		*fieldName;
 	int		fieldOffset;
 	short		fieldSize;
 	short		flags;

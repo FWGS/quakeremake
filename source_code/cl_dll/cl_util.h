@@ -169,7 +169,7 @@ inline float RemapVal( float val, float A, float B, float C, float D)
 
 #endif /* HIPNOTIC */
 HSPRITE LoadSprite(const char *pszName);
-char* UTIL_VarArgs( char *format, ... );
+char* UTIL_VarArgs( const char *format, ... );
 int UTIL_IntegerToString( int num, char *buf );
 void CL_AllocBeam( const char *model, int ent, Vector start, Vector end );
 void CL_ClearBeams( void );

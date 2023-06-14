@@ -129,7 +129,7 @@ HSPRITE LoadSprite(const char *pszName)
 }
 
 // g-cont. copied from game.dll
-char* UTIL_VarArgs( char *format, ... )
+char* UTIL_VarArgs( const char *format, ... )
 {
 	va_list		argptr;
 	static char		string[1024];

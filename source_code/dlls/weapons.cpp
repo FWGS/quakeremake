@@ -1178,9 +1178,7 @@ int CBasePlayer::W_BestWeapon()
 		return IT_NAILGUN;
 	else if(ammo_shells >= 1 && (m_iItems & IT_SHOTGUN)  )
 		return IT_SHOTGUN;
-#ifndef HIPNOTIC
-		
-#else /* HIPNOTIC */
+#ifdef HIPNOTIC
 	else if( m_iItems & IT_MJOLNIR )
 		return IT_MJOLNIR;
 #endif /* HIPNOTIC */
@@ -1191,13 +1189,8 @@ int CBasePlayer::W_BestWeapon()
 void CBasePlayer::W_SetCurrentAmmo( int sendanim /* = 1 */ )
 {
 	m_iItems &= ~(IT_SHELLS | IT_NAILS | IT_ROCKETS | IT_CELLS);
-#ifndef HIPNOTIC
-	int	iszViewModel = 0;
-#else /* HIPNOTIC */
-
 	int iszViewModel = 0;
-#endif /* HIPNOTIC */
-	char *viewmodel = "";
+	const char *viewmodel = "";
 	int iszWeaponModel = 0;
 	char *szAnimExt;
 	

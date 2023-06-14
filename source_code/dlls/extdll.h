@@ -51,7 +51,6 @@ typedef int BOOL;
 #include <stdarg.h>
 #define Q_min(a,b)  (((a) < (b)) ? (a) : (b))
 #define Q_max(a,b)  (((a) > (b)) ? (a) : (b))
-#define _vsnprintf(a,b,c,d) vsnprintf(a,b,c,d)
 #endif //_WIN32
 
 // Misc C-runtime library headers

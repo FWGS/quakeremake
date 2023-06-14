@@ -69,9 +69,6 @@ void CHud :: MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 	}
 }
 
-#ifndef HIPNOTIC
-
-#endif /* ! HIPNOTIC */
 int CHud :: MsgFunc_GameMode(const char *pszName, int iSize, void *pbuf )
 {
 	BEGIN_READ( pbuf, iSize );
@@ -80,9 +77,6 @@ int CHud :: MsgFunc_GameMode(const char *pszName, int iSize, void *pbuf )
 	return 1;
 }
 
-#ifndef HIPNOTIC
-
-#endif /* ! HIPNOTIC */
 int CHud :: MsgFunc_Damage(const char *pszName, int iSize, void *pbuf )
 {
 	int	i, armor, blood;
@@ -274,8 +268,8 @@ int CHud :: MsgFunc_TempEntity( const char *pszName, int iSize, void *pbuf )
 		dl->decay = 300;
 		gEngfuncs.pfnPlaySoundByNameAtLocation( "weapons/r_exp3.wav", 1.0, pos );
 		gEngfuncs.pEfxAPI->R_ParticleExplosion2( pos, colorStart, colorLength );
-#ifdef HIPNOTIC
 		break;
+#ifdef HIPNOTIC
 	case TE_EXPLOSION3:
 		dl = gEngfuncs.pEfxAPI->CL_AllocDlight (0);
 		dl->origin = pos;
@@ -291,8 +285,8 @@ int CHud :: MsgFunc_TempEntity( const char *pszName, int iSize, void *pbuf )
 		pTemp->entity.curstate.effects = EF_FULLBRIGHT;
 		pTemp->entity.curstate.rendermode = kRenderTransAlpha;
 		pTemp->entity.curstate.renderamt = 255;
-#endif /* HIPNOTIC */
 		break;
+#endif /* HIPNOTIC */
 	case TE_BEAM: // grappling hook beam
 		HUD_ParseBeam( "models/beam.mdl" );
 		break;

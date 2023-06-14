@@ -159,7 +159,6 @@ inline void UnpackRGB(int &r, int &g, int &b, unsigned long ulRGB)\
 	b = ulRGB & 0xFF;\
 }
 
-#ifdef HIPNOTIC
 // Remap a value in the range [A,B] to [C,D].
 inline float RemapVal( float val, float A, float B, float C, float D)
 {
@@ -167,7 +166,6 @@ inline float RemapVal( float val, float A, float B, float C, float D)
 	return C + (D - C) * (val - A) / (B - A);
 }
 
-#endif /* HIPNOTIC */
 HSPRITE LoadSprite(const char *pszName);
 char* UTIL_VarArgs( const char *format, ... );
 int UTIL_IntegerToString( int num, char *buf );

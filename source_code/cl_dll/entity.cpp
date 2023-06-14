@@ -22,10 +22,8 @@
 #include "pm_shared.h"
 #include "r_studioint.h"
 #include "com_model.h"
-#ifdef HIPNOTIC
 #include "ref_params.h"
 #include "camera.h"
-#endif /* HIPNOTIC */
 
 #include "exportdef.h"
 
@@ -60,24 +58,15 @@ HUD_AddEntity
 */
 int DLLEXPORT HUD_AddEntity( int type, struct cl_entity_s *ent, const char *modelname )
 {
+#ifdef HIPNOTIC
 	switch ( type )
 	{
-#ifndef HIPNOTIC
-	case ET_NORMAL:
-#endif /* ! HIPNOTIC */
 	case ET_PLAYER:
-#ifdef HIPNOTIC
 		if ( gpViewParams && (gpViewParams->viewentity > gpViewParams->maxclients ) && !cam_thirdperson )
 			return 0;
 		break;
-	case ET_NORMAL:
-#endif /* HIPNOTIC */
-	case ET_BEAM:
-	case ET_TEMPENTITY:
-	case ET_FRAGMENTED:
-	default:
-		break;
 	}
+#endif /* HIPNOTIC */
 
 	// each frame every entity passes this function, so the overview hooks it to filter the overview entities
 	// in spectator mode:

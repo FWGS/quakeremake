@@ -52,8 +52,8 @@ int CHudSBar::Init(void)
 	hipweapons[1] = 7;
 	hipweapons[2] = 4;
 	hipweapons[3] = 16;
-
 #endif /* HIPNOTIC */
+
 	return 1;
 };
 
@@ -171,8 +171,8 @@ int CHudSBar::VidInit(void)
 
 	hsb_items[0] = gHUD.GetSpriteIndex ("sb_wsuit");
 	hsb_items[1] = gHUD.GetSpriteIndex ("sb_eshld");
-
 #endif /* HIPNOTIC */
+
 	m_iFlags |= HUD_INTERMISSION;	// g-cont. allow episode finales
 
 	return 1;
@@ -417,6 +417,7 @@ void CHudSBar::DrawInventory( float flTime )
 	}
 
 #endif /* HIPNOTIC */
+
 	// ammo counts
 	for( i = 0; i < 4; i++ )
 	{
@@ -445,11 +446,9 @@ void CHudSBar::DrawInventory( float flTime )
 			}
 			else
 			{
-#ifndef HIPNOTIC
-				//MED 01/04/97 changed keys
-				DrawPic( 192 + i * 16, -16, sb_items[i] );
-#else /* HIPNOTIC */
+#ifdef HIPNOTIC
 				if( i > 1 )
+#endif /* HIPNOTIC */
 				{
 					// MED 01/04/97 changed keys
 					DrawPic( 192 + i * 16, -16, sb_items[i] );
@@ -458,6 +457,7 @@ void CHudSBar::DrawInventory( float flTime )
 		}
 	}
 
+#ifdef HIPNOTIC
 	// hipnotic items
 	for( i = 0; i < 2; i++ )
 	{
@@ -472,10 +472,10 @@ void CHudSBar::DrawInventory( float flTime )
 			else
 			{
 				DrawPic( 288 + i * 16, -16, hsb_items[i] );
-#endif /* HIPNOTIC */
 			}
 		}
 	}
+#endif /* HIPNOTIC */
 
 	// sigils
 	for( i = 0; i < 4; i++ )
@@ -538,8 +538,8 @@ int CHudSBar::Draw(float fTime)
 
 	// health
 	DrawNum( 136, 0, gHUD.stats[STAT_HEALTH], 3, gHUD.stats[STAT_HEALTH] <= 25 );
-#ifdef HIPNOTIC
 
+#ifdef HIPNOTIC
 	// keys (hipnotic only)
 	if( gHUD.items & IT_KEY1 )
 		DrawPic( 209, 3, sb_items[0] );

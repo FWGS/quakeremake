@@ -748,9 +748,7 @@ void CStudioModelRenderer::StudioFxTransform( cl_entity_t *ent, float transform[
 			transform[2][1] *= scale;
 		}
 	break;
-#ifndef HIPNOTIC
-
-#else /* HIPNOTIC */
+#ifdef HIPNOTIC
 	case kRenderFxExpand:
 		float scaleX = 1.0 + RemapVal( sin( m_clTime * 2.8 ), -1.0f, 1.0f, 0.0f, 1.0f );
 		float scaleY = 1.0 + RemapVal( sin( m_clTime * 2.4 ), -1.0f, 1.0f, 0.0f, 1.0f );

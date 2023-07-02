@@ -97,11 +97,11 @@ public:
 	// initialization functions
 	virtual void	Spawn( void ) { return; }
 	virtual void	Precache( void ) { return; }
-#ifndef HIPNOTIC
-	virtual void	KeyValue( KeyValueData* pkvd) { pkvd->fHandled = FALSE; }
-#else /* HIPNOTIC */
 	virtual void	KeyValue( KeyValueData* pkvd)
 	{
+#ifndef HIPNOTIC
+		pkvd->fHandled = FALSE;
+#else /* HIPNOTIC */
 		if( FStrEq( pkvd->szKeyName, "count" ))
 		{
 			m_flCount = atof( pkvd->szValue );
@@ -125,8 +125,8 @@ public:
 			pkvd->fHandled = TRUE;
 		}
 		else pkvd->fHandled = FALSE;
-	}
 #endif /* HIPNOTIC */
+	}
 	virtual int	Save( CSave &save );
 	virtual int	Restore( CRestore &restore );
 	virtual int	ObjectCaps( void ) { return 0; }
@@ -137,11 +137,7 @@ public:
 
 	static	TYPEDESCRIPTION m_SaveData[];
 
-#ifndef HIPNOTIC
-	virtual void	TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vecDir, TraceResult *ptr, int bitsDamageType);
-#else /* HIPNOTIC */
 	virtual void	TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vecDir, TraceResult *ptr, int bitsDamageType );
-#endif /* HIPNOTIC */
 	virtual int	TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType );
 	virtual int	TakeHealth( float flHealth, int bitsDamageType, BOOL bIgnore = FALSE );
 	virtual void	Killed( entvars_t *pevAttacker, int iGib );
@@ -280,8 +276,8 @@ public:
 	virtual float GetCount( void ) { return 0.0f; }				// func_counter support
 
 	int	*m_pCurrentAmmo;						// Always points to one of the four ammo counts below
-
 #endif /* HIPNOTIC */
+
 	//We use this variables to store each ammo count.
 	int	ammo_shells;
 	int	ammo_nails;
@@ -457,8 +453,8 @@ public:
 
 	static void MultiExplosion( const Vector &loc, float flRad, float flDamage, float dur, float pause, float vol );
 };
-
 #endif /* HIPNOTIC */
+
 #define SetMoveDone( a ) m_pfnCallWhenMoveDone = static_cast <void (CBaseToggle::*)(void)> (a)
 
 // people gib if their health is <= this at the time of death
@@ -544,11 +540,11 @@ public:
 #ifdef HIPNOTIC
 	int	total_gremlins;	// count of gremlins that placed on a map by level-designer
 #endif /* HIPNOTIC */
-	
+
 	int	found_secrets;	// number of secrets found
 	int	killed_monsters;	// number of monsters killed
-#ifdef HIPNOTIC
 
+#ifdef HIPNOTIC
 	int	num_prox_grenades;	// count of alive proximity grenades
 	int	num_spawn_gremlins;	// count of splitted gremlins (reborned from gibs)
 #endif /* HIPNOTIC */

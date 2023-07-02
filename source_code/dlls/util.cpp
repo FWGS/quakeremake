@@ -892,7 +892,6 @@ float UTIL_AngleDistance( float next, float cur )
 	return delta;
 }
 
-#ifdef HIPNOTIC
 void UTIL_NormalizeAngles( Vector &ang )
 {
 	while( ang.x > 360.0f )
@@ -925,7 +924,6 @@ void UTIL_NormalizeAngles( Vector &ang )
 		ang.z = ang.z + 360.0f;
 	}
 }
-#endif /* HIPNOTIC */
 
 float UTIL_SplineFraction( float value, float scale )
 {

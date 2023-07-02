@@ -241,9 +241,7 @@ extern Vector		UTIL_ClampVectorToBox( const Vector &input, const Vector &clampSi
 extern float		UTIL_Approach( float target, float value, float speed );
 extern float		UTIL_ApproachAngle( float target, float value, float speed );
 extern float		UTIL_AngleDistance( float next, float cur );
-#ifdef HIPNOTIC
 extern void		UTIL_NormalizeAngles( Vector &ang );
-#endif /* HIPNOTIC */
 
 extern char			*UTIL_VarArgs( const char *format, ... );
 extern void			UTIL_Remove( CBaseEntity *pEntity );

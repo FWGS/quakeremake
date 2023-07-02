@@ -522,10 +522,10 @@ void V_UpdatePalette (struct ref_params_s *pparams)
 
 	V_CalcBlend ();
 
-	r = 255*v_blend[0]*v_blend[3];
-	g = 255*v_blend[1]*v_blend[3];
-	b = 255*v_blend[2]*v_blend[3];
-	a = 255 - (255*v_blend[3]);
+	r = 255*v_blend[0];
+	g = 255*v_blend[1];
+	b = 255*v_blend[2];
+	a = 255*v_blend[3];
 
 	screenfade_t sf;
 
@@ -546,9 +546,9 @@ void V_UpdatePalette (struct ref_params_s *pparams)
 	sf.fadeg = (int)g;
 	sf.fadeb = (int)b;
 	sf.fadealpha = (int)a;
-	sf.fadeFlags = FFADE_STAYOUT|FFADE_MODULATE;
+	sf.fadeFlags = FFADE_STAYOUT;
 
-	gEngfuncs.pfnSetScreenFade( &sf );	
+	gEngfuncs.pfnSetScreenFade( &sf );
 	v_resetCshifts = 1;
 }
 

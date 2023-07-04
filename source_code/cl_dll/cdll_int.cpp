@@ -33,7 +33,8 @@ extern "C"
 #include <windows.h>
 #endif
 #include "exportdef.h"
-
+#include "VGUI_Panel.h"
+#include "VGUI_App.h"
 
 cl_enginefunc_t gEngfuncs;
 CHud gHUD;
@@ -75,37 +76,14 @@ void DLLEXPORT HUD_MobilityInterface( void *gpMobileEngfuncs );
 }
 
 /*
-================================
+=================
 HUD_GetRect
 
-Vgui stub
-================================
+VGui stub
+=================
 */
 int *HUD_GetRect( void )
 {
-#ifdef _WIN32
-	RECT wrect;
-	static int extent[4];
-
-	if( GetWindowRect( GetActiveWindow(), &wrect ))
-          {
-		if( !wrect.left )
-		{
-			extent[0] = wrect.left;	//+4
-			extent[1] = wrect.top;	//+30
-			extent[2] = wrect.right;	//-4
-			extent[3] = wrect.bottom;	//-4
-		}
-		else
-		{
-			extent[0] = wrect.left + 4;	//+4
-			extent[1] = wrect.top + 30;	//+30
-			extent[2] = wrect.right - 4;	//-4
-			extent[3] = wrect.bottom - 4;	//-4
-		}
-	}
-	return extent;	
-#else
 	static int extent[4];
 
 	extent[0] = gEngfuncs.GetWindowCenterX() - ScreenWidth / 2;
@@ -114,7 +92,46 @@ int *HUD_GetRect( void )
 	extent[3] = gEngfuncs.GetWindowCenterY() + ScreenHeight / 2;
 
 	return extent;
-#endif
+}
+
+class TeamFortressViewport : public vgui::Panel
+{
+public:
+	TeamFortressViewport(int x,int y,int wide,int tall);
+	void Initialize( void );
+
+	virtual void paintBackground();
+	void *operator new( size_t stAllocateBlock );
+};
+
+static TeamFortressViewport* gViewPort = NULL;
+
+TeamFortressViewport::TeamFortressViewport(int x, int y, int wide, int tall) : Panel(x, y, wide, tall)
+{
+	gViewPort = this;
+	Initialize();
+}
+
+void TeamFortressViewport::Initialize()
+{
+	//vgui::App::getInstance()->setCursorOveride( vgui::App::getInstance()->getScheme()->getCursor(vgui::Scheme::scu_none) );
+}
+
+void TeamFortressViewport::paintBackground()
+{
+//	int wide, tall;
+//	getParent()->getSize( wide, tall );
+//	setSize( wide, tall );
+	int extents[4];
+	getParent()->getAbsExtents(extents[0],extents[1],extents[2],extents[3]);
+	gEngfuncs.VGui_ViewportPaintBackground(extents);
+}
+
+void *TeamFortressViewport::operator new( size_t stAllocateBlock )
+{
+	void *mem = ::operator new( stAllocateBlock );
+	memset( mem, 0, stAllocateBlock );
+	return mem;
 }
 
 /*
@@ -231,6 +248,23 @@ so the HUD can reinitialize itself.
 int DLLEXPORT HUD_VidInit( void )
 {
 	gHUD.VidInit();
+	vgui::Panel* root=(vgui::Panel*)gEngfuncs.VGui_GetPanel();
+	if (root) {
+		gEngfuncs.Con_Printf( "Root VGUI panel exists\n" );
+		root->setBgColor(128,128,0,0);
+
+		if (gViewPort != NULL)
+		{
+			gViewPort->Initialize();
+		}
+		else
+		{
+			gViewPort = new TeamFortressViewport(0,0,root->getWide(),root->getTall());
+			gViewPort->setParent(root);
+		}
+	} else {
+		gEngfuncs.Con_Printf( "Root VGUI panel does not exist\n" );
+	}
 
 	return 1;
 }

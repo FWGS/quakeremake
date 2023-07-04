@@ -22,7 +22,8 @@ def build(bld):
 		'../common',
 		'../engine',
 		'../pm_shared',
-		'../public']
+		'../public',
+		'../utils/fake_vgui/include']
 	source = bld.path.ant_glob('**/*.cpp')
 	source += bld.path.parent.ant_glob('pm_shared/*.c')
 

@@ -432,7 +432,7 @@ void CPlaySound :: Spawn( void )
 	}
 
 	Precache ();
-	SetThink( PlaySoundThink );
+	SetThink( &CPlaySound::PlaySoundThink );
 
 	float t = m_flWait * RANDOM_FLOAT( 0.0f, 1.0f );
 	if( t < m_flDelay ) t = m_flDelay;

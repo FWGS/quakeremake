@@ -757,7 +757,7 @@ void CTriggerHurt :: Spawn( void )
 {
 	InitTrigger();
 #ifdef HIPNOTIC
-	SetTouch( HurtTouch );
+	SetTouch( &CTriggerHurt::HurtTouch );
 #endif /* HIPNOTIC */
 
 	if (!pev->dmg)
@@ -932,7 +932,7 @@ void CTriggerMonsterJump :: Spawn ( void )
 		pev->angles = Vector( 0, 360, 0 );
 
 #ifdef HIPNOTIC
-	SetTouch( JumpTouch );
+	SetTouch( &CTriggerMonsterJump::JumpTouch );
 #endif /* HIPNOTIC */
 	InitTrigger ();
 }

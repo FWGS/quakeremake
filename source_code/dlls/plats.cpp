@@ -635,7 +635,7 @@ void CFuncTrain2 :: Blocked( CBaseEntity *pOther )
 
 void CFuncTrain2 :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
-	if (m_pfnThink != Find)
+	if (m_pfnThink != &CFuncTrain2::Find)
 	{
 		if( pev->velocity != g_vecZero )
 			return; // already activated

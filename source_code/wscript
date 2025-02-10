@@ -10,6 +10,7 @@ import re
 VERSION = '2.4'
 APPNAME = 'quake-remake'
 top = '.'
+default_prefix = '/'
 
 Context.Context.line_just = 60 # should fit for everything on 80x26
 

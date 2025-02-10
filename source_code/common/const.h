@@ -14,6 +14,9 @@
 ****/
 #ifndef CONST_H
 #define CONST_H
+
+#include "xash3d_types.h"
+
 //
 // Constants shared by the engine and dlls
 // This header file included by engine files and DLL files.
@@ -743,12 +746,6 @@ typedef unsigned short	word;
 
 #undef true
 #undef false
-
-#ifndef __cplusplus
-typedef enum { false, true }	qboolean;
-#else 
-typedef int qboolean;
-#endif
 
 typedef struct
 {

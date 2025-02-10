@@ -187,5 +187,5 @@ void	QuaternionMatrix( vec4_t quaternion, float (*matrix)[4] );
 void	QuaternionSlerp( vec4_t p, vec4_t q, float t, vec4_t qt );
 void	AngleQuaternion( float *angles, vec4_t quaternion );
 
-struct mleaf_s *Mod_PointInLeaf( Vector p, struct mnode_s *node );
+struct mleaf_s *Mod_PointInLeaf( Vector p, struct mnode_s *node, struct model_s *mod );
 bool IsXashFWGS();

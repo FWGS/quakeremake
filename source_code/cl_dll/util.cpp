@@ -418,13 +418,13 @@ Mod_PointInLeaf
 
 ==================
 */
-mleaf_t *Mod_PointInLeaf( Vector p, mnode_t *node )
+mleaf_t *Mod_PointInLeaf( Vector p, mnode_t *node, model_t *mod )
 {
 	while( 1 )
 	{
 		if( node->contents < 0 )
 			return (mleaf_t *)node;
-		node = node->children[PlaneDiff( p, node->plane ) < 0];
+		node = node_child( node, PlaneDiff( p, node->plane ) < 0, mod );
 	}
 
 	// never reached

@@ -480,7 +480,7 @@ void V_UpdatePalette (struct ref_params_s *pparams)
 	// set contents color
 	if (world != NULL && world->model != NULL)
 	{
-		mleaf_t *viewleaf = Mod_PointInLeaf( pparams->vieworg, world->model->nodes );
+		mleaf_t *viewleaf = Mod_PointInLeaf( pparams->vieworg, world->model->nodes, world->model );
 
 		if (viewleaf != NULL)
 			V_SetContentsColor (viewleaf->contents);
